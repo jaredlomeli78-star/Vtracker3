@@ -266,29 +266,21 @@
 
   async function loadMatches(){
     const list=document.getElementById('matchList');
-    if(!raw||raw.toLowerCase().includes('jareed')){
-      usingMock=true;
-      const agents=[...new Set(mockMatches.map(m=>m.ag))].sort();
-      const maps=[...new Set(mockMatches.map(m=>m.map))].sort();
-      const agSel=document.querySelectorAll('select.fsel')[0];
-      const mapSel=document.querySelectorAll('select.fsel')[1];
-      if(agSel) agSel.innerHTML=`<option value="All">All Agents</option>`+agents.map(a=>`<option>${a}</option>`).join('');
-      if(mapSel) mapSel.innerHTML=`<option value="All">All Maps</option>`+maps.map(m=>`<option>${m}</option>`).join('');
-      renderFiltered();
+    // No player — show blank state
+    if(!raw){
+      if(list) list.innerHTML='<p style="color:var(--muted);font-family:var(--mono);font-size:.8rem;padding:2rem">Search a player from the home page to view their match history.</p>';
       return;
     }
-    list.innerHTML='<p style="color:var(--cyan);font-family:var(--mono);font-size:.8rem;padding:2rem">// Fetching match history...</p>';
+    if(list) list.innerHTML='<p style="color:var(--cyan);font-family:var(--mono);font-size:.8rem;padding:2rem">// Fetching match history...</p>';
     try{
       const acc=await api(`/valorant/v1/account/${encodeURIComponent(pName)}/${encodeURIComponent(pTag)}`);
-      if(acc.status!==200) throw new Error('Player not found');
+      if(acc.status!==200) throw new Error('Player not found — check name and tag');
       puuid=acc.data.puuid;
       allMatches=[];
-      for(let page=0;page<5;page++){
-        const r=await api(`/valorant/v3/matches/${region}/${encodeURIComponent(pName)}/${encodeURIComponent(pTag)}?size=20${page>0?`&page=${page}`:''}`);
-        if(r.status!==200||!r.data?.length) break;
-        allMatches=[...allMatches,...r.data];
-        if(r.data.length<20) break;
-      }
+      // Fetch most recent 20 matches across all modes
+      const r=await api(`/valorant/v3/matches/${region}/${encodeURIComponent(pName)}/${encodeURIComponent(pTag)}?size=20`);
+      if(r.status===200&&r.data?.length) allMatches=r.data;
+      // Populate agent and map dropdowns from real data
       const agents=[...new Set(allMatches.map(m=>m.players?.all_players?.find(p=>p.puuid===puuid)?.character).filter(Boolean))].sort();
       const maps=[...new Set(allMatches.map(m=>m.metadata?.map).filter(Boolean))].sort();
       const agSel=document.querySelectorAll('select.fsel')[0];
@@ -298,9 +290,7 @@
       usingMock=false;
       renderFiltered();
     }catch(err){
-      usingMock=true;
-      renderFiltered();
-      list.innerHTML+='<p style="color:var(--red);font-family:var(--mono);font-size:.75rem;padding:.5rem 2rem">⚠ '+err.message+' — showing sample data.</p>';
+      if(list) list.innerHTML=`<p style="color:var(--red);font-family:var(--mono);font-size:.8rem;padding:2rem">⚠ ${err.message}</p>`;
     }
   }
 
