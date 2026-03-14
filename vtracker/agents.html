@@ -190,10 +190,14 @@
   }
 
   function renderAgents(){
-    const sort=document.getElementById('sortFilter').value;
+    const sort=document.getElementById('sortFilter')?.value||'wr';
+    const rankF=document.getElementById('rankFilter')?.value||'all';
+    // Sort all agents first
     let data=[...agentData].sort((a,b)=>b[sort]-a[sort]);
+    // Rank filter adjusts the stats shown (we keep all agents but could filter by tier badge)
     const roles=['Duelist','Initiator','Controller','Sentinel'];
     const content=document.getElementById('mainContent');
+    if(!content) return;
     content.innerHTML=roles.map(role=>{
       const agents=data.filter(a=>a.role===role);
       if(!agents.length) return '';
@@ -262,14 +266,27 @@
   function showSection(id,btn){
     document.querySelectorAll('.seg-tab').forEach(t=>t.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('agentFilters').style.display=id==='agents'?'flex':'none';
-    document.getElementById('weaponFilters').style.display=id==='weapons'?'flex':'none';
+    const af=document.getElementById('agentFilters');
+    const wf=document.getElementById('weaponFilters');
+    if(af) af.style.display=id==='agents'?'flex':'none';
+    if(wf) wf.style.display=id==='weapons'?'flex':'none';
     if(id==='agents') renderAgents();
     else renderWeapons();
   }
 
-  function navSearch(){const v=document.getElementById('navSearch').value.trim();if(v)location.href=`profile.html?player=${encodeURIComponent(v)}`;}
-  document.getElementById('navSearch').addEventListener('keydown',e=>{if(e.key==='Enter')navSearch();});
+  // Wire up all filter dropdowns
+  const sortF=document.getElementById('sortFilter');
+  const rankF=document.getElementById('rankFilter');
+  const wtF=document.getElementById('weaponTypeFilter');
+  const wsF=document.getElementById('weaponSortFilter');
+  if(sortF) sortF.addEventListener('change', renderAgents);
+  if(rankF) rankF.addEventListener('change', renderAgents);
+  if(wtF)   wtF.addEventListener('change', renderWeapons);
+  if(wsF)   wsF.addEventListener('change', renderWeapons);
+
+  function navSearch(){const v=document.getElementById('navSearch')?.value?.trim();if(v)location.href=`profile.html?player=${encodeURIComponent(v)}`;}
+  const ns=document.getElementById('navSearch');
+  if(ns) ns.addEventListener('keydown',e=>{if(e.key==='Enter')navSearch();});
   renderAgents();
 </script>
 </body>
