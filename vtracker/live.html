@@ -130,7 +130,9 @@
 <footer class="z1"><p style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">Not affiliated with Riot Games &mdash; &copy; 2026 VTRACKER</p></footer>
 
 <script>
-  // Mock match data for jareedツ
+  const AE={Jett:'🌀',Raze:'⚡',Reyna:'💀',Sage:'🌿',Cypher:'🎯',Viper:'🧊',Omen:'🌑',Phoenix:'🔥',Sova:'🏹',Killjoy:'🤖',Breach:'👊',Skye:'🦅',Yoru:'👻',Astra:'⭐',KAYO:'⚔️',Chamber:'🎩',Neon:'💡',Fade:'🌙',Harbor:'🌊',Gekko:'🦎',Deadlock:'🔒',Iso:'🔷',Clove:'🌸',Vyse:'🕷️',Tejo:'🪖'};
+
+  // Mock match data for jareedツ (kept as fallback)
   const mockMatch={
     player:'jareedツ #999',
     map:'Ascent',
@@ -288,34 +290,83 @@
     const pt=hi>-1?player.slice(hi+1).trim():'NA1';
     const displayName=`${pn} #${pt}`;
 
-    // If jareedツ — show mock match immediately
-    if(pn.toLowerCase().includes('jareed')){
-      renderMatch(mockMatch);
-    } else {
-      // Try real API for live match
-      (async()=>{
-        document.getElementById('pageTitle').textContent='CHECKING...';
-        document.getElementById('pageSub').textContent=`Looking up ${displayName}...`;
-        document.getElementById('mainContent').innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:4rem;font-family:var(--mono);font-size:.8rem;color:var(--cyan)">// Checking live match status...</div>`;
-        try{
-          const active=await apiCall(`/valorant/v1/active/${playerRegion}/${encodeURIComponent(pn)}/${encodeURIComponent(pt)}`);
-          if(active.status===200&&active.data){
-            // Build match data from API response
-            const d=active.data;
-            const map=d.map?.name||'Unknown';
-            const mode=d.game_mode||'Competitive';
-            document.getElementById('pageTitle').textContent='LIVE MATCH';
-            document.getElementById('pageSub').textContent=`${displayName} — ${mode} — ${map}`;
-            document.getElementById('liveBadge').innerHTML=`<div class="live-dot"></div><div><div class="live-text">LIVE NOW</div><div class="live-count">${displayName} is in a match</div></div>`;
-            showNotInMatch(displayName); // placeholder until we parse full match
-          } else {
-            showNotInMatch(displayName);
+    // Always try real API for any player
+    (async()=>{
+      const pt3=document.getElementById('pageTitle');
+      const ps3=document.getElementById('pageSub');
+      const mc3=document.getElementById('mainContent');
+      if(pt3) pt3.textContent='CHECKING...';
+      if(ps3) ps3.textContent=`Looking up ${displayName}...`;
+      if(mc3) mc3.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:4rem;font-family:var(--mono);font-size:.8rem;color:var(--cyan)">// Checking live match status for ${displayName}...</div>`;
+      try{
+        const active=await apiCall(`/valorant/v1/active/${playerRegion}/${encodeURIComponent(pn)}/${encodeURIComponent(pt)}`);
+        if(active.status===200&&active.data){
+          // Player is in a live match — render it
+          const d=active.data;
+          const mapName=d.map?.name||d.metadata?.map||'Unknown';
+          const mode=d.game_mode||d.metadata?.queue||'Competitive';
+          const players=d.players||[];
+          const teamRed=players.filter(p=>p.teamId==='Red'||p.team==='Red');
+          const teamBlue=players.filter(p=>p.teamId==='Blue'||p.team==='Blue');
+          function avgRRLive(team){const rrs=team.map(p=>p.ranking_in_tier||0).filter(r=>r>0);return rrs.length?Math.round(rrs.reduce((a,b)=>a+b,0)/rrs.length):0;}
+          const avgA=avgRRLive(teamRed)||0;const avgB=avgRRLive(teamBlue)||0;
+          const total=avgA+avgB||1;
+          const probA=Math.round((avgA/total)*100);const probB=100-probA;
+          const lbEl=document.getElementById('liveBadge');
+          if(pt3) pt3.textContent='LIVE MATCH';
+          if(ps3) ps3.textContent=`${displayName} — ${mode} — ${mapName}`;
+          if(lbEl) lbEl.innerHTML=`<div class="live-dot"></div><div><div class="live-text">LIVE NOW</div><div class="live-count">${displayName} is in a match</div></div>`;
+          function teamHTMLLive(team,label,side){
+            return `<div class="team-col"><div class="team-header ${side}">${label}</div>
+              ${team.map(p=>{
+                const n=p.name||p.gameName||'?';const tg=p.tag||p.tagLine||'';
+                const ag=p.character||p.agent||'?';const tier=p.currenttierpatched||'?';const rr=p.ranking_in_tier||0;
+                const isMe=n.toLowerCase()===pn.toLowerCase();
+                return `<div class="player-row ${isMe?'tracked':''}" onclick="location.href='profile.html?player=${encodeURIComponent(n+(tg?' #'+tg:''))}&region=${playerRegion}'">
+                  <span class="pr-agent">${AE[ag]||'🎮'}</span>
+                  <div class="pr-info"><div class="pr-name">${n}${isMe?' <span style="color:var(--cyan);font-size:.65rem">★ YOU</span>':''}</div><div class="pr-rank">${tier}</div></div>
+                  <div class="pr-rr">${rr} RR</div>
+                </div>`;
+              }).join('')}
+              <div class="avg-bar"><span class="avg-label">Team Avg RR</span><span class="avg-val">${avgRRLive(team)} RR</span></div>
+            </div>`;
           }
-        }catch(err){
+          if(mc3) mc3.innerHTML=`
+            <div>
+              <div class="match-live-card">
+                <div class="match-meta">
+                  <div class="meta-item"><div class="meta-val">${mapName}</div><div class="meta-lbl">Map</div></div>
+                  <div class="meta-div"></div>
+                  <div class="meta-item"><div class="meta-val">${mode}</div><div class="meta-lbl">Mode</div></div>
+                  <div class="meta-div"></div>
+                  <div class="meta-item"><div class="timer" id="timer">00:00</div><div class="meta-lbl">Match Time</div></div>
+                </div>
+                <div class="teams-wrap">
+                  ${teamHTMLLive(teamRed,'Attack Side','attack')}
+                  <div class="vs-col"><div class="vs-score team-a-score">—</div><div class="vs-sep">:</div><div class="vs-score team-b-score">—</div></div>
+                  ${teamHTMLLive(teamBlue,'Defend Side','defend')}
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="card-title">Win Probability</div>
+                <div class="prob-bar"><div class="prob-a" style="width:${probA}%">${probA}%</div><div class="prob-b">${probB}%</div></div>
+                <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.65rem;margin-bottom:1rem">
+                  <span style="color:var(--grn)">Your Team (${avgA} avg RR)</span><span style="color:var(--red)">Opponents (${avgB} avg RR)</span>
+                </div>
+                <div class="map-stat-row"><span class="ms-lbl">Map</span><span class="ms-val">${mapName}</span></div>
+                <div class="map-stat-row"><span class="ms-lbl">Mode</span><span class="ms-val">${mode}</span></div>
+              </div>
+            </div>`;
+          let secs=0;setInterval(()=>{const t=document.getElementById('timer');if(t)t.textContent=`${String(Math.floor(secs/60)).padStart(2,'0')}:${String(secs++%60).padStart(2,'0')}`;},1000);
+        } else {
           showNotInMatch(displayName);
         }
-      })();
-    }
+      }catch(err){
+        showNotInMatch(displayName);
+      }
+    })();
   }
 
   document.getElementById('liveInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')searchLive();});
