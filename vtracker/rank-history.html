@@ -286,9 +286,14 @@
   }
 
   async function loadRankHistory(){
-    // Default/mock — use jareedツ mock data
+    // No player — show blank
+    if(!raw){
+      drawChart(mockDatasets.ep9);
+      return;
+    }
+
+    // Show loading state on chart
     drawChart(mockDatasets.ep9);
-    if(!raw||raw.toLowerCase().includes('jareed')) return;
 
     try{
       // Current MMR
@@ -296,20 +301,25 @@
       if(mmr.status===200&&mmr.data){
         const cur=mmr.data.current_data;
         const peak=mmr.data.highest_rank;
+        const tier=cur?.currenttierpatched||'Unranked';
         const statVals=document.querySelectorAll('.sidebar .card:first-child .stat-row .stat-val');
-        if(statVals[0]) statVals[0].textContent=cur?.ranking_in_tier||'—';
-        if(statVals[1]) statVals[1].textContent=peak?.ranking_in_tier||'—';
-        if(statVals[2]) statVals[2].textContent=`${rankEmoji(cur?.currenttierpatched)} ${cur?.currenttierpatched||'Unranked'}`;
+        if(statVals[0]) statVals[0].textContent=(cur?.ranking_in_tier||0)+' RR';
+        if(statVals[1]) statVals[1].textContent=peak?.patched_tier||'—';
+        if(statVals[2]) statVals[2].textContent=`${rankEmoji(tier)} ${tier}`;
       }
 
       // MMR history
       const hist=await api(`/valorant/v1/mmr-history/${region}/${encodeURIComponent(pName)}/${encodeURIComponent(pTag)}`);
-      if(hist.status!==200||!hist.data?.length) return;
+      if(hist.status!==200||!hist.data?.length){
+        console.warn('No MMR history data returned');
+        return;
+      }
 
       const hData=[...hist.data].reverse(); // oldest first
 
-      // Build chart data (tier*100 + rr for relative scale)
-      const rrVals=hData.map(e=>(e.currenttier||0)*100+(e.ranking_in_tier||0));
+      // Build chart — use actual RR values per game
+      const rrVals=hData.map(e=>e.ranking_in_tier||0);
+      // Split by episode for the filter buttons
       realData={ep9:rrVals.slice(-20),ep8:rrVals.slice(-40,-20),all:rrVals};
       drawChart(realData[currentDataset]||rrVals);
 
@@ -346,8 +356,7 @@
       if(ms[3]) ms[3].textContent=maxL+' Games';
 
     }catch(err){
-      console.warn('Rank history API error:',err.message);
-      drawChart(mockDatasets[currentDataset]);
+      console.warn('Rank history error:',err.message);
     }
   }
 
