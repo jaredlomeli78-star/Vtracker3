@@ -438,9 +438,10 @@
     const raw=params.get('player')||'';
     const region=(params.get('region')||'na').toLowerCase();
 
-    // No player in URL — show default jareedツ mock data
+    // No player in URL — show blank state
     if(!raw){
-      loadMockData();
+      const pn=document.getElementById('pName');
+      if(pn) pn.textContent='Search a player above';
       return;
     }
 
@@ -499,15 +500,11 @@
         if(rr) rr.textContent=`${cur?.ranking_in_tier||0} RR — Peak: ${peak?.patched_tier||'N/A'}`;
       }
 
-      // ── MATCHES (up to 100) ───────────────────────────────
+      // ── MATCHES (most recent 20) ──────────────────────────
       document.getElementById('pName').textContent=`${d.name} — loading matches...`;
       let allMatches=[];
-      for(let page=0;page<5;page++){
-        const r=await api(`/valorant/v3/matches/${region}/${encodeURIComponent(d.name)}/${encodeURIComponent(d.tag)}?mode=competitive&size=20${page>0?`&page=${page}`:''}`);
-        if(r.status!==200||!r.data?.length) break;
-        allMatches=[...allMatches,...r.data];
-        if(r.data.length<20) break;
-      }
+      const r=await api(`/valorant/v3/matches/${region}/${encodeURIComponent(d.name)}/${encodeURIComponent(d.tag)}?mode=competitive&size=20`);
+      if(r.status===200&&r.data?.length) allMatches=r.data;
       document.getElementById('pName').textContent=d.name;
 
       processMatches(allMatches, d.puuid, d.name, d.tag, region);
@@ -549,12 +546,12 @@
       }catch(e){console.warn('MMR history unavailable');}
 
     }catch(err){
-      document.getElementById('pName').textContent='Error';
-      document.getElementById('pTag').textContent='';
+      const pn=document.getElementById('pName');
+      const pt=document.getElementById('pTag');
+      if(pn) pn.textContent='Player Not Found';
+      if(pt) pt.textContent='';
       const info=document.querySelector('.profile-info');
-      if(info) info.innerHTML+=`<p style="color:var(--red);font-family:var(--mono);font-size:.75rem;margin-top:8px">⚠ ${err.message}</p>`;
-      // Fall back to mock data on error
-      loadMockData();
+      if(info) info.innerHTML+=`<p style="color:var(--red);font-family:var(--mono);font-size:.75rem;margin-top:8px">⚠ ${err.message}<br>Check the player name and region are correct.</p>`;
     }
   }
 
