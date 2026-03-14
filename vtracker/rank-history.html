@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>VTRACKER — Rank History</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--bg:#07070d;--bg2:#0d0d1a;--cyan:#00f5ff;--mag:#ff00cc;--yel:#f5e642;--grn:#4ade80;--red:#f87171;--text:#dde1f0;--muted:#525870;--bdr:rgba(0,245,255,0.15);--gc:0 0 18px rgba(0,245,255,0.6);--orb:'Orbitron','Courier New',monospace;--raj:'Rajdhani','Arial Narrow',sans-serif;--mono:'Share Tech Mono','Courier New',monospace;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:var(--raj);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';pointer-events:none;position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);z-index:9999}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,245,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.03) 1px,transparent 1px);background-size:48px 48px}
+    .z1{position:relative;z-index:1}
+    nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:64px;background:rgba(7,7,13,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr)}
+    .logo{font-family:var(--orb);font-weight:900;font-size:1.2rem;letter-spacing:4px;color:var(--cyan);text-shadow:var(--gc);text-decoration:none}
+    .logo em{color:var(--mag);font-style:normal}
+    .nav-links{display:flex;gap:2rem;list-style:none}
+    .nav-links a{font-family:var(--raj);font-weight:600;font-size:.85rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
+    .nav-links a:hover{color:var(--cyan)}
+    .nav-search{display:flex;border:1px solid rgba(0,245,255,.2);background:rgba(255,255,255,.03)}
+    .nav-search input{background:none;border:none;outline:none;font-family:var(--raj);font-size:.85rem;color:var(--text);padding:6px 14px;width:200px}
+    .nav-search input::placeholder{color:var(--muted)}
+    .nav-search button{font-family:var(--orb);font-size:.6rem;font-weight:700;padding:6px 14px;border:none;background:var(--cyan);color:#000;cursor:pointer}
+    @media(max-width:700px){.nav-links{display:none}.nav-search input{width:120px}}
+    .page-header{padding:2.5rem 5% 0;border-bottom:1px solid var(--bdr);background:linear-gradient(180deg,rgba(0,245,255,.03),transparent)}
+    .breadcrumb{font-family:var(--mono);font-size:.68rem;color:var(--muted);margin-bottom:1rem}
+    .breadcrumb a{color:var(--cyan);text-decoration:none}
+    .page-title{font-family:var(--orb);font-size:clamp(1.4rem,3vw,2rem);font-weight:900;color:#fff;letter-spacing:2px;margin-bottom:4px}
+    .page-sub{font-family:var(--mono);font-size:.7rem;color:var(--muted);margin-bottom:1.5rem}
+    .tabs{display:flex}
+    .tab{font-family:var(--orb);font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:12px 18px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-decoration:none;display:block}
+    .tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+    .content{padding:2.5rem 5%;display:grid;grid-template-columns:1fr 300px;gap:2rem}
+    @media(max-width:900px){.content{grid-template-columns:1fr}}
+    .card{border:1px solid var(--bdr);background:var(--bg2);padding:1.8rem;margin-bottom:1.5rem}
+    .card-title{font-family:var(--orb);font-size:.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:1.4rem;display:flex;align-items:center;gap:8px}
+    .card-title::before{content:'';display:block;width:3px;height:14px;background:var(--cyan);box-shadow:var(--gc)}
+    .cf-btn{font-family:var(--orb);font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 12px;border:1px solid var(--bdr);color:var(--muted);background:transparent;cursor:pointer;transition:all .2s;margin-right:6px;margin-bottom:1rem}
+    .cf-btn.active,.cf-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+    .chart-wrap{width:100%;overflow-x:auto}
+    svg.chart{display:block;width:100%;min-width:420px;height:260px}
+    .tier-legend{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--bdr)}
+    .tier-item{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.62rem;color:var(--muted)}
+    .tier-dot{width:8px;height:8px;border-radius:50%}
+    table{width:100%;border-collapse:collapse}
+    .ep-table{border:1px solid var(--bdr);overflow:hidden}
+    thead tr{background:rgba(0,245,255,.05);border-bottom:1px solid var(--bdr)}
+    th{font-family:var(--mono);font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:10px 14px;text-align:left}
+    td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-family:var(--raj);font-size:.9rem}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr:hover{background:rgba(0,245,255,.03)}
+    .ep-rank{font-family:var(--orb);font-size:.75rem;color:#fff}
+    .ep-rr{font-family:var(--orb);font-size:.8rem;color:var(--cyan)}
+    .ep-wr.pos{color:var(--grn)}.ep-wr.neg{color:var(--red)}
+    .ep-change.up{color:var(--grn)}.ep-change.dn{color:var(--red)}
+    .sidebar{display:flex;flex-direction:column;gap:1.5rem}
+    .stat-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+    .stat-row:last-child{border-bottom:none}
+    .stat-lbl{font-family:var(--mono);font-size:.68rem;color:var(--muted);letter-spacing:1px}
+    .stat-val{font-family:var(--orb);font-size:.8rem;color:#fff}
+    .stat-val.cy{color:var(--cyan)}.stat-val.gn{color:var(--grn)}
+    .streak-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+    .streak-dot{width:14px;height:14px;border-radius:2px}
+    .streak-dot.w{background:var(--grn)}.streak-dot.l{background:var(--red)}.streak-dot.d{background:var(--muted)}
+    footer{border-top:1px solid var(--bdr);padding:2rem 5%;text-align:center}
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<nav class="z1">
+  <a href="index.html" class="logo">VT<em>RK</em>R</a>
+  <ul class="nav-links">
+    <li><a href="leaderboard.html">Leaderboards</a></li>
+    <li><a href="agents.html">Agents</a></li>
+    <li><a href="live.html">Live</a></li>
+  </ul>
+  <div class="nav-search">
+    <input id="navSearch" type="text" placeholder="Search player..."/>
+    <button onclick="navSearch()">GO</button>
+  </div>
+</nav>
+<div class="page-header z1">
+  <div class="breadcrumb"><a href="index.html">Home</a> / <a href="profile.html?player=jareed%E3%83%84%20%23999">jareedツ #999</a> / Rank History</div>
+  <div class="page-title">RANK HISTORY</div>
+  <div class="page-sub">// jareedツ #999 &mdash; MMR progression across all episodes</div>
+  <div class="tabs">
+    <a href="profile.html?player=jareed%E3%83%84%20%23999" class="tab">Overview</a>
+    <a href="match-history.html?player=jareed%E3%83%84%20%23999" class="tab">Match History</a>
+    <a href="rank-history.html?player=jareed%E3%83%84%20%23999" class="tab active">Rank History</a>
+  </div>
+</div>
+<div class="content z1">
+  <div>
+    <div class="card">
+      <div class="card-title">RR Over Time</div>
+      <button class="cf-btn active" onclick="activateFilter(this,'ep9')">Episode 9</button>
+      <button class="cf-btn" onclick="activateFilter(this,'ep8')">Episode 8</button>
+      <button class="cf-btn" onclick="activateFilter(this,'all')">All Time</button>
+      <div class="chart-wrap">
+        <svg class="chart" id="rrChart" viewBox="0 0 700 240" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="lg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#00f5ff"/><stop offset="100%" stop-color="#ff00cc"/></linearGradient>
+            <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00f5ff" stop-opacity=".2"/><stop offset="100%" stop-color="#00f5ff" stop-opacity="0"/></linearGradient>
+          </defs>
+          <line x1="0" y1="48" x2="700" y2="48" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+          <line x1="0" y1="96" x2="700" y2="96" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+          <line x1="0" y1="144" x2="700" y2="144" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+          <line x1="0" y1="192" x2="700" y2="192" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+          <path id="areaPath" fill="url(#ag)"/>
+          <path id="linePath" fill="none" stroke="url(#lg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <g id="dotGroup"></g>
+          <g id="xLabels"></g>
+        </svg>
+      </div>
+      <div class="tier-legend">
+        <div class="tier-item"><div class="tier-dot" style="background:#ff00cc"></div>Immortal</div>
+        <div class="tier-item"><div class="tier-dot" style="background:#00f5ff"></div>Diamond</div>
+        <div class="tier-item"><div class="tier-dot" style="background:#a855f7"></div>Platinum</div>
+        <div class="tier-item"><div class="tier-dot" style="background:#f5e642"></div>Gold</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Episode Breakdown</div>
+      <div class="ep-table">
+        <table>
+          <thead><tr><th>Episode / Act</th><th>Peak Rank</th><th>Peak RR</th><th>Win Rate</th><th>Change</th></tr></thead>
+          <tbody>
+            <tr><td>Episode 9 Act 2</td><td class="ep-rank">💎 Diamond 2</td><td class="ep-rr">64 RR</td><td class="ep-wr pos">54%</td><td class="ep-change gn" style="color:var(--grn)">▲ Current</td></tr>
+            <tr><td>Episode 9 Act 1</td><td class="ep-rank">💎 Diamond 1</td><td class="ep-rr">88 RR</td><td class="ep-wr pos">56%</td><td class="ep-change up">↑ Promoted</td></tr>
+            <tr><td>Episode 8 Act 3</td><td class="ep-rank">🔮 Immortal 1</td><td class="ep-rr">42 RR</td><td class="ep-wr pos">58%</td><td class="ep-change up">↑ Peak</td></tr>
+            <tr><td>Episode 8 Act 2</td><td class="ep-rank">💎 Diamond 3</td><td class="ep-rr">88 RR</td><td class="ep-wr pos">55%</td><td class="ep-change up">↑ +240 RR</td></tr>
+            <tr><td>Episode 8 Act 1</td><td class="ep-rank">💎 Diamond 1</td><td class="ep-rr">44 RR</td><td class="ep-wr neg">48%</td><td class="ep-change dn">↓ -60 RR</td></tr>
+            <tr><td>Episode 7 Act 3</td><td class="ep-rank">💠 Platinum 3</td><td class="ep-rr">71 RR</td><td class="ep-wr pos">52%</td><td class="ep-change up">↑ +180 RR</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div class="card">
+      <div class="card-title">Season Stats</div>
+      <div class="stat-row"><span class="stat-lbl">Current RR</span><span class="stat-val cy">64 RR</span></div>
+      <div class="stat-row"><span class="stat-lbl">Peak RR (All Time)</span><span class="stat-val cy">42 RR (Imm 1)</span></div>
+      <div class="stat-row"><span class="stat-lbl">Current Rank</span><span class="stat-val">💎 Diamond 2</span></div>
+      <div class="stat-row"><span class="stat-lbl">Games This Act</span><span class="stat-val">87</span></div>
+      <div class="stat-row"><span class="stat-lbl">RR Gained</span><span class="stat-val gn">+320 RR</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recent Form</div>
+      <div style="font-family:var(--mono);font-size:.65rem;color:var(--muted);margin-bottom:10px">Last 20 games</div>
+      <div class="streak-row">
+        <div class="streak-dot w"></div><div class="streak-dot w"></div><div class="streak-dot l"></div>
+        <div class="streak-dot w"></div><div class="streak-dot l"></div><div class="streak-dot w"></div>
+        <div class="streak-dot w"></div><div class="streak-dot l"></div><div class="streak-dot w"></div>
+        <div class="streak-dot w"></div><div class="streak-dot l"></div><div class="streak-dot w"></div>
+        <div class="streak-dot l"></div><div class="streak-dot w"></div><div class="streak-dot w"></div>
+        <div class="streak-dot l"></div><div class="streak-dot w"></div><div class="streak-dot w"></div>
+        <div class="streak-dot w"></div><div class="streak-dot l"></div>
+      </div>
+      <div style="display:flex;gap:1.5rem;margin-top:1rem">
+        <div><div style="font-family:var(--orb);font-size:1.2rem;color:var(--grn)">13W</div><div style="font-family:var(--mono);font-size:.6rem;color:var(--muted)">WINS</div></div>
+        <div><div style="font-family:var(--orb);font-size:1.2rem;color:var(--red)">7L</div><div style="font-family:var(--mono);font-size:.6rem;color:var(--muted)">LOSSES</div></div>
+        <div><div style="font-family:var(--orb);font-size:1.2rem;color:var(--cyan)">65%</div><div style="font-family:var(--mono);font-size:.6rem;color:var(--muted)">WIN RATE</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Rank Milestones</div>
+      <div class="stat-row"><span class="stat-lbl">First Immortal</span><span class="stat-val">Ep 8 Act 3</span></div>
+      <div class="stat-row"><span class="stat-lbl">First Diamond</span><span class="stat-val">Ep 7 Act 3</span></div>
+      <div class="stat-row"><span class="stat-lbl">Longest Win Streak</span><span class="stat-val gn">6 Games</span></div>
+      <div class="stat-row"><span class="stat-lbl">Longest Loss Streak</span><span class="stat-val" style="color:var(--red)">3 Games</span></div>
+    </div>
+  </div>
+</div>
+<footer class="z1"><p style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">Not affiliated with Riot Games &mdash; &copy; 2026 VTRACKER</p></footer>
+<script>
+  async function api(path){
+    const res=await fetch(`/api/valorant?path=${encodeURIComponent(path)}`);
+    if(!res.ok) throw new Error(`API error ${res.status}`);
+    return res.json();
+  }
+  function rankEmoji(t=''){
+    const s=t.toLowerCase();
+    if(s.includes('radiant'))   return '✨';
+    if(s.includes('immortal'))  return '🔮';
+    if(s.includes('ascendant')) return '🌿';
+    if(s.includes('diamond'))   return '💎';
+    if(s.includes('platinum'))  return '💠';
+    if(s.includes('gold'))      return '🥇';
+    if(s.includes('silver'))    return '🥈';
+    if(s.includes('bronze'))    return '🥉';
+    if(s.includes('iron'))      return '🔩';
+    return '🎮';
+  }
+
+  const params=new URLSearchParams(location.search);
+  const raw=params.get('player')||'';
+  const region=(params.get('region')||'na').toLowerCase();
+  const hashIdx=raw.lastIndexOf('#');
+  const pName=raw?hashIdx>-1?raw.slice(0,hashIdx).trim():raw.trim():'jareedツ';
+  const pTag=raw?hashIdx>-1?raw.slice(hashIdx+1).trim():'NA1':'999';
+  const pp=encodeURIComponent(raw||'jareedツ #999');
+
+  const bc=document.querySelector('.breadcrumb');
+  const psub=document.querySelector('.page-sub');
+  if(bc) bc.innerHTML=`<a href="index.html">Home</a> / <a href="profile.html?player=${pp}&region=${region}">${pName} #${pTag}</a> / Rank History`;
+  if(psub) psub.textContent=`// ${pName} #${pTag} — MMR progression`;
+  document.querySelectorAll('.tab').forEach(t=>{
+    if(t.textContent.includes('Overview')) t.href=`profile.html?player=${pp}&region=${region}`;
+    if(t.textContent.includes('Match'))    t.href=`match-history.html?player=${pp}&region=${region}`;
+  });
+
+  // Mock datasets (default)
+  const mockDatasets={
+    ep9:[32,48,56,44,62,74,58,82,64,78,88,72,96,80,88,76,92,64,80,72,64],
+    ep8:[20,36,28,44,38,56,48,64,72,60,80,88,76,92,84,100,88,112,98,42],
+    all:[20,36,28,44,38,56,48,64,72,60,80,88,76,92,84,100,88,112,98,42,32,48,56,44,62,74,58,82,64]
+  };
+  let currentDataset='ep9';
+  let realData=null;
+
+  function drawChart(data){
+    if(!data?.length) return;
+    const W=700,H=240,PAD=20;
+    const min=Math.max(0,Math.min(...data)-20),max=Math.max(...data)+20;
+    const range=max-min||1;
+    const xStep=(W-PAD*2)/(data.length-1||1);
+    const toY=v=>PAD+(1-(v-min)/range)*(H-PAD*2);
+    const pts=data.map((v,i)=>({x:PAD+i*xStep,y:toY(v)}));
+    const lp=document.getElementById('linePath');
+    const ap=document.getElementById('areaPath');
+    if(lp) lp.setAttribute('d',`M ${pts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L ')}`);
+    if(ap) ap.setAttribute('d',`M ${pts[0].x},${H} L ${pts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L ')} L ${pts[pts.length-1].x},${H} Z`);
+    const dg=document.getElementById('dotGroup');dg.innerHTML='';
+    const step=Math.max(1,Math.floor(pts.length/6));
+    for(let i=0;i<pts.length;i+=step){
+      dg.innerHTML+=`<circle cx="${pts[i].x.toFixed(1)}" cy="${pts[i].y.toFixed(1)}" r="4" fill="#00f5ff" stroke="#07070d" stroke-width="2"/>`;
+    }
+    const xg=document.getElementById('xLabels');xg.innerHTML='';
+    for(let i=0;i<pts.length;i+=step){
+      xg.innerHTML+=`<text x="${pts[i].x.toFixed(1)}" y="${H+14}" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#525870">G${i+1}</text>`;
+    }
+  }
+
+  function activateFilter(btn,key){
+    document.querySelectorAll('.cf-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentDataset=key;
+    if(realData&&realData[key]) drawChart(realData[key]);
+    else drawChart(mockDatasets[key]);
+  }
+
+  function updateEpisodeTable(epArr){
+    const tbody=document.querySelector('tbody');
+    if(!tbody||!epArr.length) return;
+    tbody.innerHTML=epArr.map((ep,i)=>{
+      const wr=Math.round((ep.wins/(ep.wins+ep.losses||1))*100);
+      const next=epArr[i+1];
+      const dir=next?(ep.peakRR>next.peakRR?'up':'dn'):'eq';
+      return `<tr>
+        <td>${(ep.ep||'').replace(/_/g,' ')||'Season '+(i+1)}</td>
+        <td class="ep-rank">${rankEmoji(ep.peakTier)} ${ep.peakTier||'Unranked'}</td>
+        <td class="ep-rr">${ep.peakRR} RR</td>
+        <td class="ep-wr ${wr>=50?'pos':'neg'}">${wr}%</td>
+        <td class="ep-change ${dir}">${dir==='up'?'↑ Higher':dir==='dn'?'↓ Lower':'—'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function updateStreakDots(history){
+    const sr=document.querySelector('.streak-row');
+    if(!sr) return;
+    const recent=history.slice(0,20);
+    sr.innerHTML=recent.map(e=>{
+      const chg=e.mmr_change_to_last_game||0;
+      const cls=chg>0?'w':chg<0?'l':'d';
+      return `<div class="streak-dot ${cls}" title="${chg>0?'+':''}${chg} RR"></div>`;
+    }).join('');
+    const wins=recent.filter(e=>(e.mmr_change_to_last_game||0)>0).length;
+    const losses=recent.filter(e=>(e.mmr_change_to_last_game||0)<0).length;
+    const els=document.querySelectorAll('.sidebar .card:nth-child(2) [style*="1.2rem"]');
+    if(els[0]) els[0].textContent=wins+'W';
+    if(els[1]) els[1].textContent=losses+'L';
+    if(els[2]) els[2].textContent=Math.round((wins/(wins+losses||1))*100)+'%';
+  }
+
+  async function loadRankHistory(){
+    // Default/mock — use jareedツ mock data
+    drawChart(mockDatasets.ep9);
+    if(!raw||raw.toLowerCase().includes('jareed')) return;
+
+    try{
+      // Current MMR
+      const mmr=await api(`/valorant/v2/mmr/${region}/${encodeURIComponent(pName)}/${encodeURIComponent(pTag)}`);
+      if(mmr.status===200&&mmr.data){
+        const cur=mmr.data.current_data;
+        const peak=mmr.data.highest_rank;
+        const statVals=document.querySelectorAll('.sidebar .card:first-child .stat-row .stat-val');
+        if(statVals[0]) statVals[0].textContent=cur?.ranking_in_tier||'—';
+        if(statVals[1]) statVals[1].textContent=peak?.ranking_in_tier||'—';
+        if(statVals[2]) statVals[2].textContent=`${rankEmoji(cur?.currenttierpatched)} ${cur?.currenttierpatched||'Unranked'}`;
+      }
+
+      // MMR history
+      const hist=await api(`/valorant/v1/mmr-history/${region}/${encodeURIComponent(pName)}/${encodeURIComponent(pTag)}`);
+      if(hist.status!==200||!hist.data?.length) return;
+
+      const hData=[...hist.data].reverse(); // oldest first
+
+      // Build chart data (tier*100 + rr for relative scale)
+      const rrVals=hData.map(e=>(e.currenttier||0)*100+(e.ranking_in_tier||0));
+      realData={ep9:rrVals.slice(-20),ep8:rrVals.slice(-40,-20),all:rrVals};
+      drawChart(realData[currentDataset]||rrVals);
+
+      // Episode breakdown
+      const epMap={};
+      hData.forEach(e=>{
+        const ep=e.season_id||'Unknown';
+        if(!epMap[ep]) epMap[ep]={ep,peakTier:'',peakRR:0,wins:0,losses:0};
+        if((e.ranking_in_tier||0)>epMap[ep].peakRR){
+          epMap[ep].peakRR=e.ranking_in_tier||0;
+          epMap[ep].peakTier=e.currenttierpatched||'';
+        }
+        if((e.mmr_change_to_last_game||0)>0) epMap[ep].wins++;
+        else if((e.mmr_change_to_last_game||0)<0) epMap[ep].losses++;
+      });
+      updateEpisodeTable(Object.values(epMap).reverse());
+
+      // Streak dots
+      updateStreakDots(hist.data);
+
+      // Milestones
+      const ms=document.querySelectorAll('.sidebar .card:last-child .stat-row .stat-val');
+      const radGames=hData.filter(e=>(e.currenttierpatched||'').toLowerCase().includes('radiant'));
+      const immGames=hData.filter(e=>(e.currenttierpatched||'').toLowerCase().includes('immortal'));
+      if(ms[0]) ms[0].textContent=radGames.length?new Date((radGames[0].date_raw||0)*1000).toLocaleDateString():'Never';
+      if(ms[1]) ms[1].textContent=immGames.length?new Date((immGames[0].date_raw||0)*1000).toLocaleDateString():'Never';
+      let maxW=0,curW=0,maxL=0,curL=0;
+      hData.forEach(e=>{
+        const chg=e.mmr_change_to_last_game||0;
+        if(chg>0){curW++;curL=0;}else{curL++;curW=0;}
+        if(curW>maxW) maxW=curW;if(curL>maxL) maxL=curL;
+      });
+      if(ms[2]) ms[2].textContent=maxW+' Games';
+      if(ms[3]) ms[3].textContent=maxL+' Games';
+
+    }catch(err){
+      console.warn('Rank history API error:',err.message);
+      drawChart(mockDatasets[currentDataset]);
+    }
+  }
+
+  loadRankHistory();
+  function navSearch(){const v=document.getElementById('navSearch').value.trim();if(v)location.href=`profile.html?player=${encodeURIComponent(v)}`;}
+  document.getElementById('navSearch').addEventListener('keydown',e=>{if(e.key==='Enter')navSearch();});
+</script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>VTRACKER — Leaderboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--bg:#07070d;--bg2:#0d0d1a;--cyan:#00f5ff;--mag:#ff00cc;--yel:#f5e642;--grn:#4ade80;--red:#f87171;--text:#dde1f0;--muted:#525870;--bdr:rgba(0,245,255,0.15);--gc:0 0 18px rgba(0,245,255,0.6);--orb:'Orbitron','Courier New',monospace;--raj:'Rajdhani','Arial Narrow',sans-serif;--mono:'Share Tech Mono','Courier New',monospace;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:var(--raj);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';pointer-events:none;position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);z-index:9999}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,245,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.03) 1px,transparent 1px);background-size:48px 48px}
+    .z1{position:relative;z-index:1}
+    nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:64px;background:rgba(7,7,13,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr)}
+    .logo{font-family:var(--orb);font-weight:900;font-size:1.2rem;letter-spacing:4px;color:var(--cyan);text-shadow:var(--gc);text-decoration:none}
+    .logo em{color:var(--mag);font-style:normal}
+    .nav-links{display:flex;gap:2rem;list-style:none}
+    .nav-links a{font-family:var(--raj);font-weight:600;font-size:.85rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--cyan)}
+    .nav-search{display:flex;border:1px solid rgba(0,245,255,.2);background:rgba(255,255,255,.03)}
+    .nav-search input{background:none;border:none;outline:none;font-family:var(--raj);font-size:.85rem;color:var(--text);padding:6px 14px;width:200px}
+    .nav-search input::placeholder{color:var(--muted)}
+    .nav-search button{font-family:var(--orb);font-size:.6rem;font-weight:700;padding:6px 14px;border:none;background:var(--cyan);color:#000;cursor:pointer}
+    @media(max-width:700px){.nav-links{display:none}.nav-search input{width:120px}}
+    .page-hero{padding:3rem 5% 2rem;background:linear-gradient(180deg,rgba(0,245,255,.04),transparent);border-bottom:1px solid var(--bdr)}
+    .page-tag{font-family:var(--mono);font-size:.65rem;letter-spacing:4px;text-transform:uppercase;color:var(--mag);margin-bottom:6px}
+    .page-title{font-family:var(--orb);font-size:clamp(1.6rem,4vw,2.6rem);font-weight:900;color:#fff;letter-spacing:2px;margin-bottom:6px}
+    .region-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.5rem}
+    .rtab{font-family:var(--orb);font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:8px 18px;border:1px solid var(--bdr);color:var(--muted);background:transparent;cursor:pointer;transition:all .2s}
+    .rtab.active{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 12px rgba(0,245,255,.15)}
+    .rtab:hover{border-color:var(--cyan);color:var(--cyan)}
+    .filters{padding:1.2rem 5%;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--bdr);background:rgba(0,0,0,.2)}
+    .fsel{background:rgba(255,255,255,.04);border:1px solid var(--bdr);color:var(--text);font-family:var(--mono);font-size:.7rem;padding:6px 12px;outline:none;cursor:pointer}
+    .fsel option{background:var(--bg2)}
+    .search-in{background:rgba(255,255,255,.04);border:1px solid var(--bdr);color:var(--text);font-family:var(--raj);font-size:.85rem;padding:6px 14px;outline:none;width:220px}
+    .search-in::placeholder{color:var(--muted)}
+    .search-in:focus{border-color:var(--cyan)}
+    .podium{padding:3rem 5%;display:flex;align-items:flex-end;justify-content:center;gap:1rem;flex-wrap:wrap}
+    .podium-card{border:1px solid var(--bdr);background:var(--bg2);padding:1.5rem 1rem;text-align:center;min-width:160px;flex:1;max-width:220px;cursor:pointer;transition:border-color .2s}
+    .podium-card:hover{border-color:var(--cyan)}
+    .podium-card.first{border-color:rgba(245,230,66,.4);background:rgba(245,230,66,.04);margin-bottom:40px}
+    .podium-card.second{border-color:rgba(192,192,192,.3);margin-bottom:20px}
+    .podium-card.third{border-color:rgba(205,127,50,.3)}
+    .podium-pos{font-family:var(--orb);font-size:2rem;font-weight:900;line-height:1;margin-bottom:4px}
+    .podium-card.first .podium-pos{color:var(--yel)}
+    .podium-card.second .podium-pos{color:#c8c8c8}
+    .podium-card.third .podium-pos{color:#cd7f32}
+    .podium-name{font-family:var(--orb);font-size:.8rem;font-weight:700;letter-spacing:1px;color:#fff;margin-bottom:2px}
+    .podium-tag{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+    .podium-rr{font-family:var(--orb);font-size:1rem;color:var(--cyan);margin-top:8px}
+    .podium-wr{font-family:var(--mono);font-size:.68rem;color:var(--grn);margin-top:2px}
+    .lb-section{padding:0 5% 3rem}
+    .lb-wrap{border:1px solid var(--bdr);overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    thead tr{background:rgba(0,245,255,.05);border-bottom:1px solid var(--bdr)}
+    th{font-family:var(--mono);font-size:.6rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);padding:12px 16px;text-align:left;cursor:pointer;user-select:none;white-space:nowrap}
+    th:hover{color:var(--cyan)}
+    td{padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap}
+    tbody tr{transition:background .15s;cursor:pointer}
+    tbody tr:hover{background:rgba(0,245,255,.04)}
+    tbody tr:last-child td{border-bottom:none}
+    .lb-pos{font-family:var(--orb);font-size:.8rem;font-weight:700;color:var(--muted)}
+    .lb-pos.g{color:var(--yel)}.lb-pos.s{color:#c8c8c8}.lb-pos.b{color:#cd7f32}
+    .lb-pname{font-family:var(--raj);font-weight:700;font-size:1rem;color:#fff}
+    .lb-tag{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+    .lb-badge{display:inline-block;padding:2px 8px;font-family:var(--mono);font-size:.58rem;letter-spacing:1px;border:1px solid}
+    .lb-badge.rad{color:var(--yel);border-color:rgba(245,230,66,.35);background:rgba(245,230,66,.05)}
+    .lb-badge.imm{color:var(--mag);border-color:rgba(255,0,204,.35);background:rgba(255,0,204,.05)}
+    .lb-rr{font-family:var(--orb);font-size:.9rem;color:var(--cyan)}
+    .lb-wr{font-family:var(--raj);font-size:.95rem;font-weight:600;color:var(--grn)}
+    .lb-kda{font-family:var(--orb);font-size:.8rem;color:var(--text)}
+    .lb-trend.up{color:var(--grn)}.lb-trend.dn{color:var(--red)}.lb-trend.eq{color:var(--muted)}
+    .no-res{text-align:center;padding:2rem;font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+    @media(max-width:800px){th:nth-child(n+6),td:nth-child(n+6){display:none}}
+    footer{border-top:1px solid var(--bdr);padding:2rem 5%;text-align:center}
+    .live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--grn);box-shadow:0 0 8px var(--grn);margin-right:4px;animation:pulse 1.5s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<nav class="z1">
+  <a href="index.html" class="logo">VT<em>RK</em>R</a>
+  <ul class="nav-links">
+    <li><a href="leaderboard.html" class="active">Leaderboards</a></li>
+    <li><a href="agents.html">Agents</a></li>
+    <li><a href="live.html">Live</a></li>
+  </ul>
+  <div class="nav-search">
+    <input id="navSearch" type="text" placeholder="Search player..."/>
+    <button onclick="navSearch()">GO</button>
+  </div>
+</nav>
+<div class="page-hero z1">
+  <div class="page-tag">// Competitive Rankings</div>
+  <div class="page-title">GLOBAL LEADERBOARD</div>
+  <div class="region-tabs">
+    <button class="rtab active" onclick="setRegion('NA',this)">NA</button>
+    <button class="rtab" onclick="setRegion('EU',this)">EU</button>
+    <button class="rtab" onclick="setRegion('AP',this)">AP</button>
+    <button class="rtab" onclick="setRegion('KR',this)">KR</button>
+    <button class="rtab" onclick="setRegion('BR',this)">BR</button>
+    <button class="rtab" onclick="setRegion('LATAM',this)">LATAM</button>
+  </div>
+</div>
+<div class="filters z1">
+  <select class="fsel" id="rankFilter" onchange="renderTable()">
+    <option value="all">All (Radiant + Immortal)</option>
+    <option value="radiant">Radiant Only</option>
+    <option value="immortal">Immortal Only</option>
+  </select>
+  <select class="fsel" id="actFilter" onchange="renderTable()">
+    <option>Episode 9 Act 2</option>
+    <option>Episode 9 Act 1</option>
+    <option>Episode 8 Act 3</option>
+  </select>
+  <input class="search-in" id="playerFilter" type="text" placeholder="Filter by player name..." oninput="renderTable()"/>
+</div>
+<div class="podium z1" id="podium"></div>
+<div class="lb-section z1">
+  <div class="lb-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Player</th><th>Rank</th><th>RR</th><th>Win Rate</th><th>KDA</th><th>24h</th></tr></thead>
+      <tbody id="lbBody"></tbody>
+    </table>
+  </div>
+</div>
+<footer class="z1"><p style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">Not affiliated with Riot Games &mdash; &copy; 2026 VTRACKER</p></footer>
+<script>
+  async function api(path){
+    const res=await fetch(`/api/valorant?path=${encodeURIComponent(path)}`);
+    if(!res.ok) throw new Error(`API error ${res.status}`);
+    return res.json();
+  }
+
+  // Mock leaderboard data (fallback)
+  const mockLeaderboards={
+    NA:[
+      {pos:1,name:'TenZ',     tag:'NA1', badge:'rad',rank:'RADIANT',   rr:2841,wr:62,kda:2.01,trend:'eq', live:true},
+      {pos:2,name:'aspas',    tag:'BR1', badge:'rad',rank:'RADIANT',   rr:2798,wr:59,kda:1.86,trend:'up', live:false},
+      {pos:3,name:'yay',      tag:'yay', badge:'rad',rank:'RADIANT',   rr:2754,wr:61,kda:1.98,trend:'up', live:true},
+      {pos:4,name:'Derke',    tag:'EU1', badge:'rad',rank:'RADIANT',   rr:2711,wr:58,kda:1.79,trend:'dn', live:false},
+      {pos:5,name:'cNed',     tag:'TR1', badge:'imm',rank:'IMMORTAL 3',rr:2699,wr:57,kda:1.72,trend:'up', live:false},
+      {pos:6,name:'ScreaM',   tag:'EU1', badge:'rad',rank:'RADIANT',   rr:2688,wr:56,kda:1.68,trend:'dn', live:false},
+      {pos:7,name:'Wardell',  tag:'NA1', badge:'rad',rank:'RADIANT',   rr:2671,wr:55,kda:1.74,trend:'eq', live:true},
+      {pos:8,name:'nAts',     tag:'RU1', badge:'rad',rank:'RADIANT',   rr:2654,wr:60,kda:1.81,trend:'up', live:false},
+      {pos:9,name:'Shao',     tag:'EU1', badge:'rad',rank:'RADIANT',   rr:2638,wr:54,kda:1.66,trend:'eq', live:false},
+      {pos:10,name:'Chronicle',tag:'EU1',badge:'imm',rank:'IMMORTAL 3',rr:2621,wr:53,kda:1.61,trend:'dn',live:false},
+      {pos:11,name:'Leo',     tag:'EU1', badge:'rad',rank:'RADIANT',   rr:2609,wr:58,kda:1.77,trend:'up', live:false},
+      {pos:12,name:'Boaster', tag:'EU1', badge:'rad',rank:'RADIANT',   rr:2594,wr:52,kda:1.58,trend:'eq', live:false},
+      {pos:13,name:'Zekken',  tag:'NA1', badge:'rad',rank:'RADIANT',   rr:2581,wr:57,kda:1.73,trend:'dn', live:true},
+      {pos:14,name:'ardiis',  tag:'EU1', badge:'rad',rank:'RADIANT',   rr:2568,wr:53,kda:1.64,trend:'eq', live:false},
+      {pos:15,name:'Khalil',  tag:'EU1', badge:'imm',rank:'IMMORTAL 3',rr:2554,wr:51,kda:1.62,trend:'up', live:false},
+    ],
+    EU:[
+      {pos:1,name:'Derke',   tag:'EU1',badge:'rad',rank:'RADIANT',   rr:2844,wr:63,kda:1.94,trend:'up',live:false},
+      {pos:2,name:'ScreaM',  tag:'EU1',badge:'rad',rank:'RADIANT',   rr:2801,wr:60,kda:1.82,trend:'up',live:false},
+      {pos:3,name:'Shao',    tag:'EU1',badge:'rad',rank:'RADIANT',   rr:2766,wr:59,kda:1.77,trend:'eq',live:false},
+      {pos:4,name:'Leo',     tag:'EU1',badge:'rad',rank:'RADIANT',   rr:2721,wr:57,kda:1.71,trend:'dn',live:false},
+      {pos:5,name:'Boaster', tag:'EU1',badge:'rad',rank:'RADIANT',   rr:2698,wr:56,kda:1.67,trend:'eq',live:false},
+    ],
+    AP:[
+      {pos:1,name:'f0rsakeN',tag:'SG1',badge:'rad',rank:'RADIANT',rr:2821,wr:64,kda:1.97,trend:'up',live:false},
+      {pos:2,name:'d4v41',   tag:'SG1',badge:'rad',rank:'RADIANT',rr:2778,wr:61,kda:1.84,trend:'up',live:false},
+      {pos:3,name:'Jinggg',  tag:'SG1',badge:'rad',rank:'RADIANT',rr:2741,wr:59,kda:1.79,trend:'eq',live:false},
+    ],
+    KR:[
+      {pos:1,name:'Rb',   tag:'KR1',badge:'rad',rank:'RADIANT',rr:2834,wr:65,kda:2.02,trend:'up',live:false},
+      {pos:2,name:'MaKo', tag:'KR1',badge:'rad',rank:'RADIANT',rr:2791,wr:62,kda:1.88,trend:'up',live:false},
+      {pos:3,name:'BuZz', tag:'KR1',badge:'rad',rank:'RADIANT',rr:2754,wr:60,kda:1.81,trend:'eq',live:false},
+    ],
+    BR:[
+      {pos:1,name:'aspas',tag:'BR1',badge:'rad',rank:'RADIANT',rr:2856,wr:63,kda:1.99,trend:'up',live:false},
+      {pos:2,name:'Less', tag:'BR1',badge:'rad',rank:'RADIANT',rr:2812,wr:60,kda:1.86,trend:'up',live:false},
+      {pos:3,name:'heat', tag:'BR1',badge:'rad',rank:'RADIANT',rr:2769,wr:58,kda:1.78,trend:'eq',live:false},
+    ],
+    LATAM:[
+      {pos:1,name:'Mazino',tag:'LT1',badge:'rad',rank:'RADIANT',rr:2798,wr:61,kda:1.91,trend:'up',live:false},
+      {pos:2,name:'kiNgg', tag:'LT1',badge:'rad',rank:'RADIANT',rr:2754,wr:59,kda:1.82,trend:'up',live:false},
+      {pos:3,name:'valyn', tag:'LT1',badge:'rad',rank:'RADIANT',rr:2718,wr:57,kda:1.74,trend:'eq',live:false},
+    ],
+  };
+
+  let currentRegion='NA', lbData=[], usingMock=true;
+
+  async function loadLeaderboard(region){
+    const tbody=document.getElementById('lbBody');
+    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:2rem;font-family:var(--mono);font-size:.75rem;color:var(--cyan)">// Loading ${region} leaderboard...</td></tr>`;
+    clearPodium();
+
+    try{
+      const res=await api(`/valorant/v1/leaderboard/${region.toLowerCase()}?size=50`);
+      let players=Array.isArray(res)?res:Array.isArray(res.data)?res.data:(res.players||[]);
+      if(!players.length) throw new Error('No data');
+
+      // Normalise field names from API
+      lbData=players.map((p,i)=>({
+        pos:p.leaderboardRank||p.leaderboard_rank||(i+1),
+        name:p.gameName||p.game_name||p.name||'Unknown',
+        tag:p.tagLine||p.tag_line||p.tag||'',
+        badge:p.tier===27?'rad':'imm',
+        rank:p.tier===27?'RADIANT':'IMMORTAL',
+        rr:p.rankedRating||p.ranked_rating||p.rr||0,
+        wr:p.wins||0,
+        kda:0,
+        trend:'eq',
+        live:false,
+      }));
+      usingMock=false;
+      renderTable();
+      renderPodium(lbData);
+    }catch(err){
+      // Fallback to mock
+      console.warn('Leaderboard API error:',err.message,'— using mock data');
+      lbData=mockLeaderboards[region]||[];
+      usingMock=true;
+      renderTable();
+      renderPodium(lbData);
+    }
+  }
+
+  function clearPodium(){
+    const pod=document.getElementById('podium');
+    pod.innerHTML=['second','first','third'].map(cls=>`
+      <div class="podium-card ${cls}">
+        <div class="podium-pos">${cls==='first'?'👑':cls==='second'?'#2':'#3'}</div>
+        <div style="font-size:2rem;margin:8px 0">…</div>
+        <div class="podium-name">Loading</div>
+        <div class="podium-tag"></div>
+        <div class="podium-rr">— RR</div>
+      </div>`).join('');
+  }
+
+  function renderPodium(data){
+    const pod=document.getElementById('podium');
+    const order=[data[1],data[0],data[2]];
+    const classes=['second','first','third'];
+    pod.innerHTML=order.map((p,i)=>{
+      if(!p) return '';
+      return `<div class="podium-card ${classes[i]}" onclick="location.href='profile.html?player=${encodeURIComponent(p.name+(p.tag?' #'+p.tag:''))}'">
+        <div class="podium-pos">${i===1?'👑':'#'+p.pos}</div>
+        <div style="font-size:2rem;margin:8px 0">🎮</div>
+        <div class="podium-name">${p.name}</div>
+        <div class="podium-tag">${p.tag?'#'+p.tag:''}</div>
+        <div class="podium-rr">${typeof p.rr==='number'?p.rr.toLocaleString():p.rr} RR</div>
+        <div class="podium-wr">${usingMock?p.wr+'% WR':p.wr+' wins'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderTable(){
+    const rankF=document.getElementById('rankFilter').value;
+    const search=document.getElementById('playerFilter').value.toLowerCase();
+    let data=[...lbData];
+    if(rankF==='radiant')  data=data.filter(p=>p.badge==='rad');
+    if(rankF==='immortal') data=data.filter(p=>p.badge==='imm');
+    if(search) data=data.filter(p=>(p.name||'').toLowerCase().includes(search));
+    const tbody=document.getElementById('lbBody');
+    if(!data.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:2rem;font-family:var(--mono);font-size:.75rem;color:var(--muted)">No players found</td></tr>`;return;}
+    tbody.innerHTML=data.map((p,i)=>{
+      const pc=i===0?'g':i===1?'s':i===2?'b':'';
+      const trend=p.trend==='up'?'▲':p.trend==='dn'?'▼':'—';
+      const tCls=p.trend==='up'?'up':p.trend==='dn'?'dn':'eq';
+      const liveDot=p.live?`<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--grn);box-shadow:0 0 8px var(--grn);margin-right:4px;animation:pulse 1.5s infinite"></span>`:'';
+      return `<tr onclick="location.href='profile.html?player=${encodeURIComponent(p.name+(p.tag?' #'+p.tag:''))}'">
+        <td><span class="lb-pos ${pc}">#${i+1}</span></td>
+        <td><span class="lb-pname">${liveDot}${p.name}</span> ${p.tag?`<span class="lb-tag">#${p.tag}</span>`:''}</td>
+        <td><span class="lb-badge ${p.badge}">${p.rank}</span></td>
+        <td><span class="lb-rr">${typeof p.rr==='number'?p.rr.toLocaleString():p.rr} RR</span></td>
+        <td><span class="lb-wr">${usingMock?p.wr+'%':p.wr+' wins'}</span></td>
+        <td><span class="lb-kda">${p.kda?p.kda.toFixed(2):'—'}</span></td>
+        <td><span class="lb-trend ${tCls}">${trend}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function setRegion(region,btn){
+    currentRegion=region;
+    document.querySelectorAll('.rtab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    loadLeaderboard(region);
+  }
+
+  document.getElementById('rankFilter')?.addEventListener('change',renderTable);
+  document.getElementById('playerFilter')?.addEventListener('input',renderTable);
+
+  function navSearch(){const v=document.getElementById('navSearch').value.trim();if(v)location.href=`profile.html?player=${encodeURIComponent(v)}`;}
+  document.getElementById('navSearch').addEventListener('keydown',e=>{if(e.key==='Enter')navSearch();});
+
+  // Load default region on page load
+  loadLeaderboard('NA');
+</script>
+</body>
+</html>

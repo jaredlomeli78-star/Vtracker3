@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>VTRACKER — Match History</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--bg:#07070d;--bg2:#0d0d1a;--cyan:#00f5ff;--mag:#ff00cc;--yel:#f5e642;--grn:#4ade80;--red:#f87171;--text:#dde1f0;--muted:#525870;--bdr:rgba(0,245,255,0.15);--gc:0 0 18px rgba(0,245,255,0.6);--orb:'Orbitron','Courier New',monospace;--raj:'Rajdhani','Arial Narrow',sans-serif;--mono:'Share Tech Mono','Courier New',monospace;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:var(--raj);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';pointer-events:none;position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);z-index:9999}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,245,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.03) 1px,transparent 1px);background-size:48px 48px}
+    .z1{position:relative;z-index:1}
+    nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:64px;background:rgba(7,7,13,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr)}
+    .logo{font-family:var(--orb);font-weight:900;font-size:1.2rem;letter-spacing:4px;color:var(--cyan);text-shadow:var(--gc);text-decoration:none}
+    .logo em{color:var(--mag);font-style:normal}
+    .nav-links{display:flex;gap:2rem;list-style:none}
+    .nav-links a{font-family:var(--raj);font-weight:600;font-size:.85rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
+    .nav-links a:hover{color:var(--cyan)}
+    .nav-search{display:flex;border:1px solid rgba(0,245,255,.2);background:rgba(255,255,255,.03)}
+    .nav-search input{background:none;border:none;outline:none;font-family:var(--raj);font-size:.85rem;color:var(--text);padding:6px 14px;width:200px}
+    .nav-search input::placeholder{color:var(--muted)}
+    .nav-search button{font-family:var(--orb);font-size:.6rem;font-weight:700;padding:6px 14px;border:none;background:var(--cyan);color:#000;cursor:pointer}
+    @media(max-width:700px){.nav-links{display:none}.nav-search input{width:120px}}
+    .page-header{padding:2.5rem 5% 0;border-bottom:1px solid var(--bdr);background:linear-gradient(180deg,rgba(0,245,255,.03),transparent)}
+    .breadcrumb{font-family:var(--mono);font-size:.68rem;color:var(--muted);margin-bottom:1rem}
+    .breadcrumb a{color:var(--cyan);text-decoration:none}
+    .page-title{font-family:var(--orb);font-size:clamp(1.4rem,3vw,2rem);font-weight:900;color:#fff;letter-spacing:2px;margin-bottom:4px}
+    .page-sub{font-family:var(--mono);font-size:.7rem;color:var(--muted);margin-bottom:1.5rem}
+    .tabs{display:flex}
+    .tab{font-family:var(--orb);font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:12px 18px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-decoration:none;display:block}
+    .tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+    .filters{padding:1.2rem 5%;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--bdr);background:rgba(0,0,0,.15)}
+    .fl{font-family:var(--mono);font-size:.62rem;letter-spacing:2px;color:var(--muted)}
+    .fbtn{font-family:var(--orb);font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 12px;border:1px solid var(--bdr);color:var(--muted);background:transparent;cursor:pointer;transition:all .2s}
+    .fbtn.active,.fbtn:hover{border-color:var(--cyan);color:var(--cyan)}
+    .fsel{background:rgba(255,255,255,.04);border:1px solid var(--bdr);color:var(--text);font-family:var(--mono);font-size:.7rem;padding:6px 12px;outline:none;cursor:pointer}
+    .fsel option{background:var(--bg2)}
+    .summary-strip{padding:1rem 5%;display:flex;background:var(--bg2);border-bottom:1px solid var(--bdr)}
+    .sum-item{flex:1;text-align:center;padding:.8rem;border-right:1px solid var(--bdr)}
+    .sum-item:last-child{border-right:none}
+    .sum-val{font-family:var(--orb);font-size:1.2rem;font-weight:700;color:var(--cyan);line-height:1}
+    .sum-lbl{font-family:var(--mono);font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px}
+    .sum-val.win{color:var(--grn)}.sum-val.loss{color:var(--red)}
+    .matches-wrap{padding:2rem 5%}
+    .match-card{border:1px solid var(--bdr);background:var(--bg2);margin-bottom:8px;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+    .match-card:hover{border-color:rgba(0,245,255,.35);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+    .match-card.win{border-left:3px solid var(--grn)}.match-card.loss{border-left:3px solid var(--red)}
+    .match-main{display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;flex-wrap:wrap}
+    .mc-result{font-family:var(--orb);font-size:.7rem;font-weight:700;letter-spacing:2px;width:40px;flex-shrink:0}
+    .mc-result.win{color:var(--grn)}.mc-result.loss{color:var(--red)}
+    .mc-agent{font-size:1.6rem;flex-shrink:0}
+    .mc-info{flex:1;min-width:120px}
+    .mc-map{font-family:var(--raj);font-weight:700;font-size:1.05rem;color:#fff}
+    .mc-mode{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+    .mc-score{font-family:var(--orb);font-size:1.1rem;font-weight:700;min-width:60px;text-align:center}
+    .mc-score .won{color:var(--grn)}.mc-score .lost{color:var(--red)}
+    .mc-kda-val{font-family:var(--orb);font-size:1rem;color:var(--cyan)}
+    .mc-kda-lbl{font-family:var(--mono);font-size:.58rem;color:var(--muted);letter-spacing:1px}
+    .mc-stat{text-align:center}
+    .mc-stat-val{font-family:var(--orb);font-size:.85rem;color:var(--text)}
+    .mc-stat-lbl{font-family:var(--mono);font-size:.58rem;color:var(--muted);letter-spacing:1px}
+    .mc-stats{display:flex;gap:1.5rem}
+    .mc-time{font-family:var(--mono);font-size:.65rem;color:var(--muted);min-width:60px;text-align:right}
+    .no-results{text-align:center;padding:3rem;font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+    footer{border-top:1px solid var(--bdr);padding:2rem 5%;text-align:center}
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<nav class="z1">
+  <a href="index.html" class="logo">VT<em>RK</em>R</a>
+  <ul class="nav-links">
+    <li><a href="leaderboard.html">Leaderboards</a></li>
+    <li><a href="agents.html">Agents</a></li>
+    <li><a href="live.html">Live</a></li>
+  </ul>
+  <div class="nav-search">
+    <input id="navSearch" type="text" placeholder="Search player..."/>
+    <button onclick="navSearch()">GO</button>
+  </div>
+</nav>
+<div class="page-header z1">
+  <div class="breadcrumb"><a href="index.html">Home</a> / <a href="profile.html?player=jareed%E3%83%84%20%23999">jareedツ #999</a> / Match History</div>
+  <div class="page-title">MATCH HISTORY</div>
+  <div class="page-sub" id="pageSub">// jareedツ #999 &mdash; All Modes &mdash; All Agents</div>
+  <div class="tabs">
+    <a href="profile.html?player=jareed%E3%83%84%20%23999" class="tab">Overview</a>
+    <a href="match-history.html?player=jareed%E3%83%84%20%23999" class="tab active">Match History</a>
+    <a href="rank-history.html?player=jareed%E3%83%84%20%23999" class="tab">Rank History</a>
+  </div>
+</div>
+<div class="filters z1">
+  <span class="fl">Mode:</span>
+  <button class="fbtn active" onclick="setMode('All',this)">All</button>
+  <button class="fbtn" onclick="setMode('Competitive',this)">Competitive</button>
+  <button class="fbtn" onclick="setMode('Unrated',this)">Unrated</button>
+  <button class="fbtn" onclick="setMode('Deathmatch',this)">Deathmatch</button>
+  <span class="fl" style="margin-left:.5rem">Agent:</span>
+  <select class="fsel" id="agentFilter" onchange="render()">
+    <option value="All">All Agents</option>
+    <option>Reyna</option><option>Jett</option><option>Raze</option><option>Sage</option><option>Omen</option><option>Viper</option><option>Cypher</option><option>Sova</option>
+  </select>
+  <span class="fl" style="margin-left:.5rem">Map:</span>
+  <select class="fsel" id="mapFilter" onchange="render()">
+    <option value="All">All Maps</option>
+    <option>Ascent</option><option>Bind</option><option>Haven</option><option>Icebox</option><option>Split</option><option>Pearl</option><option>Fracture</option><option>Lotus</option>
+  </select>
+</div>
+<div class="summary-strip z1">
+  <div class="sum-item"><div class="sum-val win" id="sumW">—</div><div class="sum-lbl">Wins</div></div>
+  <div class="sum-item"><div class="sum-val loss" id="sumL">—</div><div class="sum-lbl">Losses</div></div>
+  <div class="sum-item"><div class="sum-val" id="sumWR">—</div><div class="sum-lbl">Win Rate</div></div>
+  <div class="sum-item"><div class="sum-val" id="sumACS">—</div><div class="sum-lbl">Avg ACS</div></div>
+  <div class="sum-item"><div class="sum-val" id="sumKDA">—</div><div class="sum-lbl">Avg KDA</div></div>
+  <div class="sum-item"><div class="sum-val" id="sumHS">—</div><div class="sum-lbl">HS Rate</div></div>
+</div>
+<div class="matches-wrap z1" id="matchList"></div>
+<footer class="z1"><p style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">Not affiliated with Riot Games &mdash; &copy; 2026 VTRACKER</p></footer>
+<script>
+  async function api(path){
+    const res=await fetch(`/api/valorant?path=${encodeURIComponent(path)}`);
+    if(!res.ok) throw new Error(`API error ${res.status}`);
+    return res.json();
+  }
+  function timeAgo(ts){
+    if(!ts) return '';
+    const diff=Date.now()-(ts*1000);
+    const m=Math.floor(diff/60000),h=Math.floor(diff/3600000),d=Math.floor(diff/86400000);
+    if(m<2) return 'Just now';if(m<60) return m+'m ago';
+    if(h<24) return h+'h ago';if(d<30) return d+'d ago';
+    return new Date(ts*1000).toLocaleDateString();
+  }
+  const AE={Jett:'🌀',Raze:'⚡',Reyna:'💀',Sage:'🌿',Cypher:'🎯',Viper:'🧊',Omen:'🌑',Phoenix:'🔥',Sova:'🏹',Killjoy:'🤖',Breach:'👊',Skye:'🦅',Yoru:'👻',Astra:'⭐',KAYO:'⚔️',Chamber:'🎩',Neon:'💡',Fade:'🌙',Harbor:'🌊',Gekko:'🦎',Deadlock:'🔒',Iso:'🔷',Clove:'🌸',Vyse:'🕷️',Tejo:'🪖'};
+
+  const mockMatches=[
+    {r:'WIN',ag:'Reyna',map:'Ascent',mode:'Competitive',k:22,d:14,a:5,myR:13,eR:8,hs:28,acs:224,t:'1h ago'},
+    {r:'WIN',ag:'Jett',map:'Bind',mode:'Competitive',k:19,d:11,a:4,myR:13,eR:9,hs:31,acs:198,t:'3h ago'},
+    {r:'LOSS',ag:'Reyna',map:'Icebox',mode:'Competitive',k:14,d:18,a:3,myR:9,eR:13,hs:22,acs:162,t:'5h ago'},
+    {r:'WIN',ag:'Raze',map:'Haven',mode:'Competitive',k:21,d:13,a:6,myR:13,eR:7,hs:26,acs:211,t:'7h ago'},
+    {r:'LOSS',ag:'Jett',map:'Split',mode:'Competitive',k:11,d:17,a:2,myR:8,eR:13,hs:19,acs:148,t:'1d ago'},
+    {r:'WIN',ag:'Sage',map:'Pearl',mode:'Competitive',k:12,d:9,a:8,myR:13,eR:10,hs:21,acs:176,t:'1d ago'},
+    {r:'WIN',ag:'Reyna',map:'Fracture',mode:'Competitive',k:24,d:12,a:4,myR:13,eR:6,hs:33,acs:238,t:'2d ago'},
+    {r:'LOSS',ag:'Raze',map:'Lotus',mode:'Competitive',k:13,d:15,a:5,myR:9,eR:13,hs:24,acs:183,t:'2d ago'},
+    {r:'WIN',ag:'Omen',map:'Ascent',mode:'Competitive',k:16,d:12,a:7,myR:13,eR:8,hs:18,acs:192,t:'3d ago'},
+    {r:'LOSS',ag:'Jett',map:'Haven',mode:'Unrated',k:10,d:14,a:3,myR:7,eR:13,hs:16,acs:139,t:'3d ago'},
+    {r:'WIN',ag:'Reyna',map:'Bind',mode:'Unrated',k:20,d:11,a:5,myR:13,eR:5,hs:29,acs:217,t:'4d ago'},
+    {r:'WIN',ag:'Raze',map:'Icebox',mode:'Competitive',k:18,d:10,a:4,myR:13,eR:9,hs:27,acs:204,t:'4d ago'},
+    {r:'LOSS',ag:'Sage',map:'Split',mode:'Competitive',k:9,d:16,a:6,myR:7,eR:13,hs:14,acs:141,t:'5d ago'},
+    {r:'WIN',ag:'Jett',map:'Pearl',mode:'Competitive',k:21,d:13,a:3,myR:13,eR:10,hs:34,acs:219,t:'5d ago'},
+    {r:'WIN',ag:'Reyna',map:'Fracture',mode:'Competitive',k:23,d:11,a:4,myR:13,eR:7,hs:30,acs:231,t:'6d ago'},
+    {r:'LOSS',ag:'Viper',map:'Haven',mode:'Competitive',k:12,d:16,a:8,myR:10,eR:13,hs:20,acs:167,t:'6d ago'},
+    {r:'WIN',ag:'Cypher',map:'Ascent',mode:'Unrated',k:14,d:10,a:9,myR:13,eR:6,hs:22,acs:189,t:'7d ago'},
+    {r:'LOSS',ag:'Raze',map:'Bind',mode:'Competitive',k:11,d:15,a:4,myR:8,eR:13,hs:21,acs:156,t:'7d ago'},
+    {r:'WIN',ag:'Jett',map:'Lotus',mode:'Competitive',k:20,d:12,a:5,myR:13,eR:8,hs:32,acs:213,t:'8d ago'},
+    {r:'WIN',ag:'Reyna',map:'Icebox',mode:'Competitive',k:17,d:10,a:4,myR:13,eR:9,hs:27,acs:201,t:'8d ago'},
+  ];
+
+  const params=new URLSearchParams(location.search);
+  const raw=params.get('player')||'';
+  const region=(params.get('region')||'na').toLowerCase();
+  const hashIdx=raw.lastIndexOf('#');
+  const pName=raw?hashIdx>-1?raw.slice(0,hashIdx).trim():raw.trim():'jareedツ';
+  const pTag=raw?hashIdx>-1?raw.slice(hashIdx+1).trim():'NA1':'999';
+  const pp=encodeURIComponent(raw||'jareedツ #999');
+
+  const bc=document.querySelector('.breadcrumb');
+  const ps=document.getElementById('pageSub');
+  if(bc) bc.innerHTML=`<a href="index.html">Home</a> / <a href="profile.html?player=${pp}&region=${region}">${pName} #${pTag}</a> / Match History`;
+  if(ps) ps.textContent=`// ${pName} #${pTag}`;
+  document.querySelectorAll('.tab').forEach(t=>{
+    if(t.textContent.includes('Overview')) t.href=`profile.html?player=${pp}&region=${region}`;
+    if(t.textContent.includes('Rank'))     t.href=`rank-history.html?player=${pp}&region=${region}`;
+  });
+
+  let allMatches=[], puuid='', usingMock=false, activeMode='All', activeAgent='All', activeMap='All';
+
+  function updateSummary(filtered){
+    let w=0,l=0,tACS=0,tKn=0,tKd=0,tHS=0,tSH=0;
+    filtered.forEach(m=>{
+      if(usingMock){
+        if(m.r==='WIN') w++;else l++;
+        tACS+=m.acs;tKn+=m.k+m.a*.5;tKd+=m.d;tHS+=m.hs;tSH+=100;
+      } else {
+        const me=m.players?.all_players?.find(p=>p.puuid===puuid);
+        if(!me) return;
+        const team=me.team?.toLowerCase();
+        const won=m.teams?.[team]?.has_won;
+        if(won) w++;else l++;
+        const rounds=m.metadata?.rounds_played||1;
+        tACS+=Math.round((me.stats?.score||0)/rounds);
+        tKn+=(me.stats?.kills||0)+(me.stats?.assists||0)*.5;tKd+=me.stats?.deaths||0;
+        const hs=me.stats?.headshots||0,bs=me.stats?.bodyshots||0,ls=me.stats?.legshots||0;
+        tHS+=hs;tSH+=hs+bs+ls;
+      }
+    });
+    const total=w+l||1;
+    const sv=document.querySelectorAll('.sum-val');
+    if(sv[0]){sv[0].textContent=w;sv[0].className='sum-val win';}
+    if(sv[1]){sv[1].textContent=l;sv[1].className='sum-val loss';}
+    if(sv[2]) sv[2].textContent=Math.round((w/total)*100)+'%';
+    if(sv[3]) sv[3].textContent=Math.round(tACS/total);
+    if(sv[4]) sv[4].textContent=tKd>0?(tKn/tKd).toFixed(2):'—';
+    if(sv[5]) sv[5].textContent=tSH>0?Math.round((tHS/tSH)*100)+'%':'—';
+  }
+
+  function matchCard(m){
+    if(usingMock) return `<div class="match-card ${m.r.toLowerCase()}">
+      <div class="match-main">
+        <span class="mc-result ${m.r.toLowerCase()}">${m.r}</span>
+        <span class="mc-agent" style="font-size:1.4rem">${AE[m.ag]||'🎮'}</span>
+        <div class="mc-info"><div class="mc-map">${m.map}</div><div class="mc-mode">${m.mode} · ${m.ag}</div></div>
+        <div class="mc-score"><span class="${m.r==='WIN'?'won':'lost'}">${m.myR}</span>–<span class="${m.r==='WIN'?'':'lost'}">${m.eR}</span></div>
+        <div><div class="mc-kda-val">${m.k}/${m.d}/${m.a}</div><div class="mc-kda-lbl">K / D / A</div></div>
+        <div class="mc-stats"><div class="mc-stat"><div class="mc-stat-val">${m.acs}</div><div class="mc-stat-lbl">ACS</div></div><div class="mc-stat"><div class="mc-stat-val">${m.hs}%</div><div class="mc-stat-lbl">HS%</div></div></div>
+        <div class="mc-time">${m.t}</div>
+      </div></div>`;
+    const me=m.players?.all_players?.find(p=>p.puuid===puuid);
+    if(!me) return '';
+    const team=me.team?.toLowerCase();
+    const won=m.teams?.[team]?.has_won;
+    const cls=won?'win':'loss';
+    const k=me.stats?.kills||0,dv=me.stats?.deaths||0,a=me.stats?.assists||0;
+    const acs=Math.round((me.stats?.score||0)/(m.metadata?.rounds_played||1));
+    const map=m.metadata?.map||'?';const ag=me.character||'?';
+    const myR=m.teams?.[team]?.rounds_won||0;const eR=m.teams?.[team==='red'?'blue':'red']?.rounds_won||0;
+    const hs=me.stats?.headshots||0,bs=me.stats?.bodyshots||0,ls=me.stats?.legshots||0;
+    const hsp=Math.round((hs/(hs+bs+ls||1))*100);
+    return `<div class="match-card ${cls}">
+      <div class="match-main">
+        <span class="mc-result ${cls}">${won?'WIN':'LOSS'}</span>
+        <span class="mc-agent" style="font-size:1.4rem">${AE[ag]||'🎮'}</span>
+        <div class="mc-info"><div class="mc-map">${map}</div><div class="mc-mode">${m.metadata?.mode||'Competitive'} · ${ag}</div></div>
+        <div class="mc-score"><span class="${won?'won':'lost'}">${myR}</span>–<span class="${won?'':'lost'}">${eR}</span></div>
+        <div><div class="mc-kda-val">${k}/${dv}/${a}</div><div class="mc-kda-lbl">K / D / A</div></div>
+        <div class="mc-stats"><div class="mc-stat"><div class="mc-stat-val">${acs}</div><div class="mc-stat-lbl">ACS</div></div><div class="mc-stat"><div class="mc-stat-val">${hsp}%</div><div class="mc-stat-lbl">HS%</div></div></div>
+        <div class="mc-time">${timeAgo(m.metadata?.game_start)}</div>
+      </div></div>`;
+  }
+
+  function renderFiltered(){
+    let filtered;
+    if(usingMock){
+      filtered=mockMatches.filter(m=>{
+        if(activeMode!=='All'&&m.mode!==activeMode) return false;
+        if(activeAgent!=='All'&&m.ag!==activeAgent) return false;
+        if(activeMap!=='All'&&m.map!==activeMap) return false;
+        return true;
+      });
+    } else {
+      filtered=allMatches.filter(m=>{
+        const me=m.players?.all_players?.find(p=>p.puuid===puuid);
+        if(!me) return false;
+        if(activeMode!=='All'){const mode=(m.metadata?.mode||'').toLowerCase();if(!mode.includes(activeMode.toLowerCase())) return false;}
+        if(activeAgent!=='All'&&(me.character||'')!==activeAgent) return false;
+        if(activeMap!=='All'&&(m.metadata?.map||'')!==activeMap) return false;
+        return true;
+      });
+    }
+    updateSummary(filtered);
+    const list=document.getElementById('matchList');
+    if(!filtered.length){list.innerHTML=`<div style="text-align:center;padding:3rem;font-family:var(--mono);font-size:.8rem;color:var(--muted)">No matches found for these filters.</div>`;return;}
+    list.innerHTML=filtered.map(matchCard).join('');
+  }
+
+  async function loadMatches(){
+    const list=document.getElementById('matchList');
+    if(!raw||raw.toLowerCase().includes('jareed')){
+      usingMock=true;
+      const agents=[...new Set(mockMatches.map(m=>m.ag))].sort();
+      const maps=[...new Set(mockMatches.map(m=>m.map))].sort();
+      const agSel=document.querySelectorAll('select.fsel')[0];
+      const mapSel=document.querySelectorAll('select.fsel')[1];
+      if(agSel) agSel.innerHTML=`<option value="All">All Agents</option>`+agents.map(a=>`<option>${a}</option>`).join('');
+      if(mapSel) mapSel.innerHTML=`<option value="All">All Maps</option>`+maps.map(m=>`<option>${m}</option>`).join('');
+      renderFiltered();
+      return;
+    }
+    list.innerHTML='<p style="color:var(--cyan);font-family:var(--mono);font-size:.8rem;padding:2rem">// Fetching match history...</p>';
+    try{
+      const acc=await api(`/valorant/v1/account/${encodeURIComponent(pName)}/${encodeURIComponent(pTag)}`);
+      if(acc.status!==200) throw new Error('Player not found');
+      puuid=acc.data.puuid;
+      allMatches=[];
+      for(let page=0;page<5;page++){
+        const r=await api(`/valorant/v3/matches/${region}/${encodeURIComponent(pName)}/${encodeURIComponent(pTag)}?size=20${page>0?`&page=${page}`:''}`);
+        if(r.status!==200||!r.data?.length) break;
+        allMatches=[...allMatches,...r.data];
+        if(r.data.length<20) break;
+      }
+      const agents=[...new Set(allMatches.map(m=>m.players?.all_players?.find(p=>p.puuid===puuid)?.character).filter(Boolean))].sort();
+      const maps=[...new Set(allMatches.map(m=>m.metadata?.map).filter(Boolean))].sort();
+      const agSel=document.querySelectorAll('select.fsel')[0];
+      const mapSel=document.querySelectorAll('select.fsel')[1];
+      if(agSel) agSel.innerHTML=`<option value="All">All Agents</option>`+agents.map(a=>`<option>${a}</option>`).join('');
+      if(mapSel) mapSel.innerHTML=`<option value="All">All Maps</option>`+maps.map(m=>`<option>${m}</option>`).join('');
+      usingMock=false;
+      renderFiltered();
+    }catch(err){
+      usingMock=true;
+      renderFiltered();
+      list.innerHTML+='<p style="color:var(--red);font-family:var(--mono);font-size:.75rem;padding:.5rem 2rem">⚠ '+err.message+' — showing sample data.</p>';
+    }
+  }
+
+  function setMode(mode,btn){activeMode=mode;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderFiltered();}
+  document.querySelectorAll('select.fsel').forEach((sel,i)=>{sel.addEventListener('change',function(){if(i===0)activeAgent=this.value;if(i===1)activeMap=this.value;renderFiltered();});});
+  function navSearch(){const v=document.getElementById('navSearch').value.trim();if(v)location.href=`profile.html?player=${encodeURIComponent(v)}`;}
+  document.getElementById('navSearch').addEventListener('keydown',e=>{if(e.key==='Enter')navSearch();});
+  loadMatches();
+</script>
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>VTRACKER — Live Match</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--bg:#07070d;--bg2:#0d0d1a;--cyan:#00f5ff;--mag:#ff00cc;--yel:#f5e642;--grn:#4ade80;--red:#f87171;--text:#dde1f0;--muted:#525870;--bdr:rgba(0,245,255,0.15);--gc:0 0 18px rgba(0,245,255,0.6);--orb:'Orbitron','Courier New',monospace;--raj:'Rajdhani','Arial Narrow',sans-serif;--mono:'Share Tech Mono','Courier New',monospace;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:var(--raj);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';pointer-events:none;position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);z-index:9999}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,245,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.03) 1px,transparent 1px);background-size:48px 48px}
+    .z1{position:relative;z-index:1}
+    nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:64px;background:rgba(7,7,13,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr)}
+    .logo{font-family:var(--orb);font-weight:900;font-size:1.2rem;letter-spacing:4px;color:var(--cyan);text-shadow:var(--gc);text-decoration:none}
+    .logo em{color:var(--mag);font-style:normal}
+    .nav-links{display:flex;gap:2rem;list-style:none}
+    .nav-links a{font-family:var(--raj);font-weight:600;font-size:.85rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--cyan)}
+    .nav-search{display:flex;border:1px solid rgba(0,245,255,.2);background:rgba(255,255,255,.03)}
+    .nav-search input{background:none;border:none;outline:none;font-family:var(--raj);font-size:.85rem;color:var(--text);padding:6px 14px;width:200px}
+    .nav-search input::placeholder{color:var(--muted)}
+    .nav-search button{font-family:var(--orb);font-size:.6rem;font-weight:700;padding:6px 14px;border:none;background:var(--cyan);color:#000;cursor:pointer}
+    @media(max-width:700px){.nav-links{display:none}.nav-search input{width:120px}}
+    .page-hero{padding:2.5rem 5%;background:linear-gradient(180deg,rgba(255,0,204,.04),transparent);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+    .page-tag{font-family:var(--mono);font-size:.65rem;letter-spacing:4px;text-transform:uppercase;color:var(--mag);margin-bottom:6px}
+    .page-title{font-family:var(--orb);font-size:clamp(1.4rem,3vw,2rem);font-weight:900;color:#fff;letter-spacing:2px}
+    .page-sub{font-family:var(--mono);font-size:.7rem;color:var(--muted);margin-top:4px}
+    .live-badge{display:flex;align-items:center;gap:8px;padding:10px 20px;border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.06)}
+    .live-dot{width:8px;height:8px;border-radius:50%;background:var(--grn);box-shadow:0 0 12px var(--grn);animation:pulse 1.4s ease-in-out infinite}
+    .live-text{font-family:var(--orb);font-size:.75rem;font-weight:700;letter-spacing:2px;color:var(--grn)}
+    .live-count{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+    .content{padding:2.5rem 5%;display:grid;grid-template-columns:1fr 280px;gap:2rem}
+    @media(max-width:900px){.content{grid-template-columns:1fr}}
+    .match-live-card{border:1px solid rgba(74,222,128,.2);background:var(--bg2);padding:2rem;position:relative;overflow:hidden;margin-bottom:1.5rem}
+    .match-live-card::before{content:'LIVE';position:absolute;top:1rem;right:1rem;font-family:var(--orb);font-size:.55rem;font-weight:700;letter-spacing:3px;color:var(--grn);border:1px solid rgba(74,222,128,.3);padding:2px 8px;background:rgba(74,222,128,.06)}
+    .match-meta{display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;flex-wrap:wrap}
+    .meta-item{display:flex;flex-direction:column;gap:2px}
+    .meta-val{font-family:var(--orb);font-size:1rem;font-weight:700;color:#fff}
+    .meta-lbl{font-family:var(--mono);font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+    .meta-div{width:1px;height:36px;background:var(--bdr)}
+    .timer{font-family:var(--orb);font-size:1.4rem;font-weight:700;color:var(--cyan);text-shadow:var(--gc)}
+    .teams-wrap{display:grid;grid-template-columns:1fr 60px 1fr;gap:0;align-items:start}
+    .team-col{display:flex;flex-direction:column;gap:6px}
+    .vs-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:8px;gap:4px}
+    .vs-score{font-family:var(--orb);font-size:2rem;font-weight:900;line-height:1}
+    .team-a-score{color:var(--grn)}.team-b-score{color:var(--red)}
+    .vs-sep{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+    .team-header{font-family:var(--orb);font-size:.65rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;padding:6px 12px;margin-bottom:4px}
+    .team-header.attack{color:var(--red);border-left:2px solid var(--red)}
+    .team-header.defend{color:var(--cyan);border-left:2px solid var(--cyan)}
+    .player-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(255,255,255,.04);background:rgba(255,255,255,.02);cursor:pointer;transition:border-color .2s}
+    .player-row:hover{border-color:var(--cyan)}
+    .player-row.tracked{border-color:rgba(0,245,255,.3);background:rgba(0,245,255,.04)}
+    .pr-agent{font-size:1.2rem;flex-shrink:0}
+    .pr-info{flex:1}
+    .pr-name{font-family:var(--raj);font-weight:700;font-size:.95rem;color:#fff}
+    .pr-rank{font-family:var(--mono);font-size:.6rem;color:var(--muted)}
+    .pr-rr{font-family:var(--orb);font-size:.8rem;color:var(--cyan);text-align:right;flex-shrink:0}
+    .avg-bar{display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(255,255,255,.03);border:1px solid var(--bdr);margin-top:8px}
+    .avg-label{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+    .avg-val{font-family:var(--orb);font-size:.9rem;color:var(--cyan)}
+    .card{border:1px solid var(--bdr);background:var(--bg2);padding:1.6rem;margin-bottom:1.5rem}
+    .card-title{font-family:var(--orb);font-size:.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:1.2rem;display:flex;align-items:center;gap:8px}
+    .card-title::before{content:'';display:block;width:3px;height:14px;background:var(--cyan)}
+    .prob-bar{height:20px;display:flex;border-radius:2px;overflow:hidden;margin-bottom:8px}
+    .prob-a{background:var(--grn);display:flex;align-items:center;justify-content:center;font-family:var(--orb);font-size:.65rem;color:#000;font-weight:700;transition:width .5s}
+    .prob-b{flex:1;background:var(--red);display:flex;align-items:center;justify-content:center;font-family:var(--orb);font-size:.65rem;color:#fff;font-weight:700}
+    .map-stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+    .map-stat-row:last-child{border:none}
+    .ms-lbl{font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+    .ms-val{font-family:var(--orb);font-size:.78rem;color:var(--text)}
+    .search-state{grid-column:1/-1;text-align:center;padding:4rem 2rem;border:1px solid var(--bdr);background:var(--bg2)}
+    .player-search-box{display:flex;max-width:500px;margin:1.5rem auto 0;border:1px solid rgba(0,245,255,.25);background:rgba(255,255,255,.04)}
+    .player-search-box input{flex:1;background:none;border:none;outline:none;font-family:var(--raj);font-size:1rem;color:var(--text);padding:14px 18px}
+    .player-search-box input::placeholder{color:var(--muted)}
+    .player-search-box select{background:rgba(0,245,255,.06);border:none;border-left:1px solid rgba(0,245,255,.2);color:var(--cyan);font-family:var(--orb);font-size:.65rem;padding:0 14px;outline:none;cursor:pointer}
+    .player-search-box select option{background:var(--bg2)}
+    .player-search-box button{font-family:var(--orb);font-size:.65rem;font-weight:700;letter-spacing:2px;padding:0 24px;border:none;background:var(--cyan);color:#000;cursor:pointer}
+    footer{border-top:1px solid var(--bdr);padding:2rem 5%;text-align:center}
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<nav class="z1">
+  <a href="index.html" class="logo">VT<em>RK</em>R</a>
+  <ul class="nav-links">
+    <li><a href="leaderboard.html">Leaderboards</a></li>
+    <li><a href="agents.html">Agents</a></li>
+    <li><a href="live.html" class="active">Live</a></li>
+  </ul>
+  <div class="nav-search">
+    <input id="navSearch" type="text" placeholder="Search player..."/>
+    <button onclick="navSearch()">GO</button>
+  </div>
+</nav>
+
+<div class="page-hero z1" id="pageHero">
+  <div>
+    <div class="page-tag">// Real-Time</div>
+    <div class="page-title" id="pageTitle">LIVE MATCH TRACKER</div>
+    <div class="page-sub" id="pageSub">Search a player to check their live match</div>
+  </div>
+  <div class="live-badge" id="liveBadge">
+    <div class="live-dot" style="background:var(--muted);box-shadow:none;animation:none"></div>
+    <div>
+      <div class="live-text" style="color:var(--muted)">NO PLAYER</div>
+      <div class="live-count">Enter a player name to check</div>
+    </div>
+  </div>
+</div>
+
+<div class="content z1" id="mainContent">
+  <div class="search-state">
+    <div style="font-size:3rem;margin-bottom:1.5rem">🔍</div>
+    <div style="font-family:var(--orb);font-size:1rem;color:var(--text);letter-spacing:2px;margin-bottom:8px">SEARCH A PLAYER</div>
+    <div style="font-family:var(--mono);font-size:.75rem;color:var(--muted)">Enter a Riot ID to check if they are currently in a live match</div>
+    <div class="player-search-box">
+      <input id="liveInput" type="text" placeholder="PlayerName #TAG"/>
+      <select id="liveRegion">
+        <option value="na">NA</option><option value="eu">EU</option><option value="ap">AP</option><option value="kr">KR</option>
+      </select>
+      <button onclick="searchLive()">CHECK</button>
+    </div>
+  </div>
+</div>
+
+<footer class="z1"><p style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">Not affiliated with Riot Games &mdash; &copy; 2026 VTRACKER</p></footer>
+
+<script>
+  // Mock match data for jareedツ
+  const mockMatch={
+    player:'jareedツ #999',
+    map:'Ascent',
+    mode:'Competitive',
+    server:'US-East',
+    scoreA:9,scoreB:6,
+    teamA:[
+      {name:'jareedツ',tag:'999', agent:'💀',agentName:'Reyna', rank:'💎 Diamond 2',rr:64,  tracked:true},
+      {name:'clutchKing',tag:'NA1',agent:'🌀',agentName:'Jett',  rank:'💎 Diamond 3',rr:92,  tracked:false},
+      {name:'fraggod',  tag:'99',  agent:'🧊',agentName:'Viper', rank:'🔮 Immortal 1',rr:38,  tracked:false},
+      {name:'support1', tag:'NA2', agent:'🌿',agentName:'Sage',  rank:'💠 Platinum 3',rr:88,  tracked:false},
+      {name:'anchor',   tag:'GO',  agent:'🎯',agentName:'Cypher',rank:'💠 Platinum 2',rr:54,  tracked:false},
+    ],
+    teamB:[
+      {name:'proSniper',tag:'EU1', agent:'🎯',agentName:'Operator',rank:'🔮 Immortal 1',rr:56, tracked:false},
+      {name:'flasher',  tag:'BR1', agent:'👊',agentName:'Breach',  rank:'💎 Diamond 3',rr:76, tracked:false},
+      {name:'smokes',   tag:'TR1', agent:'🌑',agentName:'Omen',    rank:'💎 Diamond 2',rr:48, tracked:false},
+      {name:'lurker',   tag:'EU2', agent:'👻',agentName:'Yoru',    rank:'💎 Diamond 1',rr:82, tracked:false},
+      {name:'entry',    tag:'NA3', agent:'⚡',agentName:'Raze',    rank:'💠 Platinum 3',rr:94, tracked:false},
+    ],
+    avgRRA:67.2,
+    avgRRB:71.2,
+  };
+
+  function avgRR(team){return Math.round(team.reduce((a,p)=>a+p.rr,0)/team.length);}
+
+  function renderMatch(match){
+    const probA=Math.round((match.avgRRA/(match.avgRRA+match.avgRRB))*100);
+    const probB=100-probA;
+
+    const pt=document.getElementById('pageTitle');
+    const ps=document.getElementById('pageSub');
+    const lb=document.getElementById('liveBadge');
+    const mc=document.getElementById('mainContent');
+    if(pt) pt.textContent=`${match.player} — ${match.mode} — ${match.map}`;
+    if(ps) ps.textContent=`Tracking ${match.player}`;
+    if(lb) lb.innerHTML=`
+      <div class="live-dot"></div>
+      <div><div class="live-text">LIVE NOW</div><div class="live-count">${match.player} is in a match</div></div>`;
+
+    function teamHTML(team,label,side){
+      return `<div class="team-col">
+        <div class="team-header ${side}">${label}</div>
+        ${team.map(p=>`<div class="player-row ${p.tracked?'tracked':''}" onclick="location.href='profile.html?player=${encodeURIComponent(p.name+' #'+p.tag)}'">
+          <span class="pr-agent">${p.agent}</span>
+          <div class="pr-info">
+            <div class="pr-name">${p.name}${p.tracked?' <span style="color:var(--cyan);font-size:.65rem">★ YOU</span>':''}</div>
+            <div class="pr-rank">${p.rank}</div>
+          </div>
+          <div class="pr-rr">${p.rr} RR</div>
+        </div>`).join('')}
+        <div class="avg-bar"><span class="avg-label">Team Avg RR</span><span class="avg-val">${avgRR(team)} RR</span></div>
+      </div>`;
+    }
+
+    if(mc) mc.innerHTML=`
+      <div>
+        <div class="match-live-card">
+          <div class="match-meta">
+            <div class="meta-item"><div class="meta-val">${match.map}</div><div class="meta-lbl">Map</div></div>
+            <div class="meta-div"></div>
+            <div class="meta-item"><div class="meta-val">${match.mode}</div><div class="meta-lbl">Mode</div></div>
+            <div class="meta-div"></div>
+            <div class="meta-item"><div class="timer" id="timer">00:00</div><div class="meta-lbl">Match Time</div></div>
+            <div class="meta-div"></div>
+            <div class="meta-item"><div class="meta-val">Round 16</div><div class="meta-lbl">Current Round</div></div>
+          </div>
+          <div class="teams-wrap">
+            ${teamHTML(match.teamA,'Attack Side','attack')}
+            <div class="vs-col">
+              <div class="vs-score team-a-score">${match.scoreA}</div>
+              <div class="vs-sep">:</div>
+              <div class="vs-score team-b-score">${match.scoreB}</div>
+            </div>
+            ${teamHTML(match.teamB,'Defend Side','defend')}
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">Win Probability</div>
+          <div class="prob-bar">
+            <div class="prob-a" style="width:${probA}%">${probA}%</div>
+            <div class="prob-b">${probB}%</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.65rem;margin-bottom:1rem">
+            <span style="color:var(--grn)">Your Team (${Math.round(match.avgRRA)} avg RR)</span>
+            <span style="color:var(--red)">Opponents (${Math.round(match.avgRRB)} avg RR)</span>
+          </div>
+          <div class="map-stat-row"><span class="ms-lbl">RR Advantage</span><span class="ms-val" style="color:${match.avgRRA>match.avgRRB?'var(--grn)':'var(--red)'}">${match.avgRRA>match.avgRRB?'+':''}${Math.round(match.avgRRA-match.avgRRB)} RR</span></div>
+          <div class="map-stat-row"><span class="ms-lbl">Score Advantage</span><span class="ms-val" style="color:var(--grn)">+${match.scoreA-match.scoreB} Rounds</span></div>
+          <div class="map-stat-row"><span class="ms-lbl">Prediction</span><span class="ms-val" style="color:${probA>50?'var(--grn)':'var(--red)'}">${probA>50?'Favored':'Underdog'}</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Map: ${match.map}</div>
+          <div class="map-stat-row"><span class="ms-lbl">Attack Win Rate</span><span class="ms-val">49.8%</span></div>
+          <div class="map-stat-row"><span class="ms-lbl">Defense Win Rate</span><span class="ms-val">50.2%</span></div>
+          <div class="map-stat-row"><span class="ms-lbl">jareedツ Win Rate Here</span><span class="ms-val" style="color:var(--grn)">61%</span></div>
+          <div class="map-stat-row"><span class="ms-lbl">Most Picked Agent</span><span class="ms-val">💀 Reyna</span></div>
+        </div>
+      </div>`;
+
+    // Start timer
+    let secs=0;
+    setInterval(()=>{
+      secs++;
+      const t=document.getElementById('timer');
+      if(t) t.textContent=`${String(Math.floor(secs/60)).padStart(2,'0')}:${String(secs%60).padStart(2,'0')}`;
+    },1000);
+  }
+
+  function showNotInMatch(name){
+    const pt2=document.getElementById('pageTitle');
+    const ps2=document.getElementById('pageSub');
+    const lb2=document.getElementById('liveBadge');
+    const mc2=document.getElementById('mainContent');
+    if(pt2) pt2.textContent='NOT IN MATCH';
+    if(ps2) ps2.textContent=`${name} is not currently in a live game`;
+    if(lb2) lb2.innerHTML=`
+      <div class="live-dot" style="background:var(--muted);box-shadow:none;animation:none"></div>
+      <div><div class="live-text" style="color:var(--muted)">OFFLINE</div><div class="live-count">${name} is not in a match</div></div>`;
+    if(mc2) mc2.innerHTML=`
+      <div class="search-state">
+        <div style="font-size:3rem;margin-bottom:1rem">😴</div>
+        <div style="font-family:var(--orb);font-size:1rem;color:var(--muted);letter-spacing:2px">NOT IN A MATCH</div>
+        <div style="font-family:var(--mono);font-size:.75rem;color:var(--muted);margin-top:8px;margin-bottom:2rem">${name} is not currently playing</div>
+        <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+          <a href="profile.html?player=${encodeURIComponent(name)}" style="font-family:var(--orb);font-size:.65rem;letter-spacing:2px;color:var(--cyan);text-decoration:none;padding:10px 22px;border:1px solid var(--cyan)">VIEW PROFILE</a>
+          <a href="match-history.html?player=${encodeURIComponent(name)}" style="font-family:var(--orb);font-size:.65rem;letter-spacing:2px;color:var(--muted);text-decoration:none;padding:10px 22px;border:1px solid var(--bdr)">MATCH HISTORY</a>
+        </div>
+      </div>`;
+  }
+
+  async function apiCall(path){
+    const res=await fetch(`/api/valorant?path=${encodeURIComponent(path)}`);
+    if(!res.ok) throw new Error(`API error ${res.status}`);
+    return res.json();
+  }
+
+  function searchLive(){
+    const val=document.getElementById('liveInput')?.value?.trim();
+    const reg=document.getElementById('liveRegion')?.value||'na';
+    if(!val) return;
+    location.href=`live.html?player=${encodeURIComponent(val)}&region=${reg}`;
+  }
+
+  // Check URL params on load
+  const params=new URLSearchParams(location.search);
+  const player=params.get('player');
+  const playerRegion=(params.get('region')||'na').toLowerCase();
+
+  if(player){
+    const hi=player.lastIndexOf('#');
+    const pn=hi>-1?player.slice(0,hi).trim():player.trim();
+    const pt=hi>-1?player.slice(hi+1).trim():'NA1';
+    const displayName=`${pn} #${pt}`;
+
+    // If jareedツ — show mock match immediately
+    if(pn.toLowerCase().includes('jareed')){
+      renderMatch(mockMatch);
+    } else {
+      // Try real API for live match
+      (async()=>{
+        document.getElementById('pageTitle').textContent='CHECKING...';
+        document.getElementById('pageSub').textContent=`Looking up ${displayName}...`;
+        document.getElementById('mainContent').innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:4rem;font-family:var(--mono);font-size:.8rem;color:var(--cyan)">// Checking live match status...</div>`;
+        try{
+          const active=await apiCall(`/valorant/v1/active/${playerRegion}/${encodeURIComponent(pn)}/${encodeURIComponent(pt)}`);
+          if(active.status===200&&active.data){
+            // Build match data from API response
+            const d=active.data;
+            const map=d.map?.name||'Unknown';
+            const mode=d.game_mode||'Competitive';
+            document.getElementById('pageTitle').textContent='LIVE MATCH';
+            document.getElementById('pageSub').textContent=`${displayName} — ${mode} — ${map}`;
+            document.getElementById('liveBadge').innerHTML=`<div class="live-dot"></div><div><div class="live-text">LIVE NOW</div><div class="live-count">${displayName} is in a match</div></div>`;
+            showNotInMatch(displayName); // placeholder until we parse full match
+          } else {
+            showNotInMatch(displayName);
+          }
+        }catch(err){
+          showNotInMatch(displayName);
+        }
+      })();
+    }
+  }
+
+  document.getElementById('liveInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')searchLive();});
+  function navSearch(){const v=document.getElementById('navSearch').value.trim();if(v)location.href=`profile.html?player=${encodeURIComponent(v)}`;}
+  document.getElementById('navSearch').addEventListener('keydown',e=>{if(e.key==='Enter')navSearch();});
+</script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>VTRACKER — Agents & Weapons</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--bg:#07070d;--bg2:#0d0d1a;--cyan:#00f5ff;--mag:#ff00cc;--yel:#f5e642;--grn:#4ade80;--red:#f87171;--text:#dde1f0;--muted:#525870;--bdr:rgba(0,245,255,0.15);--gc:0 0 18px rgba(0,245,255,0.6);--orb:'Orbitron','Courier New',monospace;--raj:'Rajdhani','Arial Narrow',sans-serif;--mono:'Share Tech Mono','Courier New',monospace;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:var(--raj);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';pointer-events:none;position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);z-index:9999}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,245,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.03) 1px,transparent 1px);background-size:48px 48px}
+    .z1{position:relative;z-index:1}
+    nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:64px;background:rgba(7,7,13,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr)}
+    .logo{font-family:var(--orb);font-weight:900;font-size:1.2rem;letter-spacing:4px;color:var(--cyan);text-shadow:var(--gc);text-decoration:none}
+    .logo em{color:var(--mag);font-style:normal}
+    .nav-links{display:flex;gap:2rem;list-style:none}
+    .nav-links a{font-family:var(--raj);font-weight:600;font-size:.85rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--cyan)}
+    .nav-search{display:flex;border:1px solid rgba(0,245,255,.2);background:rgba(255,255,255,.03)}
+    .nav-search input{background:none;border:none;outline:none;font-family:var(--raj);font-size:.85rem;color:var(--text);padding:6px 14px;width:200px}
+    .nav-search input::placeholder{color:var(--muted)}
+    .nav-search button{font-family:var(--orb);font-size:.6rem;font-weight:700;padding:6px 14px;border:none;background:var(--cyan);color:#000;cursor:pointer}
+    @media(max-width:700px){.nav-links{display:none}.nav-search input{width:120px}}
+    .page-hero{padding:3rem 5% 2rem;background:linear-gradient(180deg,rgba(0,245,255,.04),transparent);border-bottom:1px solid var(--bdr)}
+    .page-tag{font-family:var(--mono);font-size:.65rem;letter-spacing:4px;text-transform:uppercase;color:var(--mag);margin-bottom:6px}
+    .page-title{font-family:var(--orb);font-size:clamp(1.6rem,4vw,2.4rem);font-weight:900;color:#fff;letter-spacing:2px;margin-bottom:6px}
+    .seg-tabs{display:flex;margin-top:2rem;border-bottom:1px solid var(--bdr)}
+    .seg-tab{font-family:var(--orb);font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:12px 22px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+    .seg-tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+    .filters-bar{padding:1.2rem 5%;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--bdr);background:rgba(0,0,0,.15)}
+    .fl{font-family:var(--mono);font-size:.62rem;letter-spacing:2px;color:var(--muted)}
+    .fsel{background:rgba(255,255,255,.04);border:1px solid var(--bdr);color:var(--text);font-family:var(--mono);font-size:.7rem;padding:6px 12px;outline:none;cursor:pointer}
+    .fsel option{background:var(--bg2)}
+    .content{padding:2.5rem 5%}
+    .section-divider{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;margin-top:2.5rem}
+    .section-divider:first-child{margin-top:0}
+    .sd-tag{font-family:var(--mono);font-size:.6rem;letter-spacing:4px;text-transform:uppercase;color:var(--mag)}
+    .sd-title{font-family:var(--orb);font-size:1.1rem;font-weight:700;color:#fff;letter-spacing:2px}
+    .sd-line{flex:1;height:1px;background:linear-gradient(to right,var(--bdr),transparent)}
+    .agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+    .agent-card{border:1px solid var(--bdr);background:var(--bg2);padding:1.6rem;transition:border-color .25s,transform .2s;position:relative;overflow:hidden}
+    .agent-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--cyan),var(--mag));transform:scaleX(0);transform-origin:left;transition:transform .35s}
+    .agent-card:hover{border-color:rgba(0,245,255,.3);transform:translateY(-3px)}.agent-card:hover::before{transform:scaleX(1)}
+    .ac-head{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem}
+    .ac-icon{font-size:2.2rem;flex-shrink:0}
+    .ac-name{font-family:var(--orb);font-size:.9rem;font-weight:700;letter-spacing:2px;color:#fff}
+    .ac-role{font-family:var(--raj);font-size:.75rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mag);margin-top:2px}
+    .ac-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem}
+    .ac-stat{text-align:center;padding:8px 4px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)}
+    .ac-stat-val{font-family:var(--orb);font-size:.85rem;color:var(--cyan)}
+    .ac-stat-lbl{font-family:var(--mono);font-size:.55rem;color:var(--muted);letter-spacing:1px;margin-top:2px}
+    .ac-bar-row{display:flex;flex-direction:column;gap:6px}
+    .ac-bar-item{display:flex;align-items:center;gap:8px}
+    .ac-bar-lbl{font-family:var(--mono);font-size:.6rem;color:var(--muted);width:60px;flex-shrink:0}
+    .ac-bar-track{flex:1;height:3px;background:rgba(255,255,255,.06);border-radius:2px}
+    .ac-bar-fill{height:100%;background:var(--cyan);border-radius:2px}
+    .ac-bar-val{font-family:var(--orb);font-size:.65rem;color:var(--text);width:36px;text-align:right;flex-shrink:0}
+    .ac-wr-badge{display:inline-block;padding:3px 10px;font-family:var(--orb);font-size:.65rem;font-weight:700;letter-spacing:1px;border:1px solid;margin-top:10px}
+    .ac-wr-badge.hot{color:var(--grn);border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.06)}
+    .ac-wr-badge.mid{color:var(--yel);border-color:rgba(245,230,66,.35);background:rgba(245,230,66,.06)}
+    .ac-wr-badge.cold{color:var(--red);border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.06)}
+    .weapons-section{display:none}
+    .weapons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+    .weapon-card{border:1px solid var(--bdr);background:var(--bg2);padding:1.6rem;transition:border-color .25s}
+    .weapon-card:hover{border-color:rgba(0,245,255,.3)}
+    .wc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem}
+    .wc-name{font-family:var(--orb);font-size:1rem;font-weight:700;letter-spacing:2px;color:#fff}
+    .wc-type{font-family:var(--mono);font-size:.65rem;color:var(--mag);letter-spacing:1px}
+    .wc-price{font-family:var(--orb);font-size:.8rem;color:var(--yel)}
+    .wc-visual{font-size:3rem;text-align:center;padding:1rem 0;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:1rem}
+    .wc-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem}
+    .wc-stat{padding:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)}
+    .wc-stat-val{font-family:var(--orb);font-size:.95rem;color:var(--cyan)}
+    .wc-stat-lbl{font-family:var(--mono);font-size:.58rem;color:var(--muted);letter-spacing:1px;margin-top:2px}
+    .wc-dmg-title{font-family:var(--mono);font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .wc-dmg-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+    .wc-dmg-zone{font-family:var(--raj);font-size:.8rem;font-weight:600;color:var(--muted)}
+    .wc-dmg-val{font-family:var(--orb);font-size:.8rem;color:var(--text)}
+    .wc-dmg-val.head{color:var(--red)}
+    .wc-note{margin-top:10px;font-family:var(--mono);font-size:.65rem;color:var(--muted);padding:8px;border:1px solid rgba(0,245,255,.1);background:rgba(0,245,255,.03)}
+    footer{border-top:1px solid var(--bdr);padding:2rem 5%;text-align:center}
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<nav class="z1">
+  <a href="index.html" class="logo">VT<em>RK</em>R</a>
+  <ul class="nav-links">
+    <li><a href="leaderboard.html">Leaderboards</a></li>
+    <li><a href="agents.html" class="active">Agents</a></li>
+    <li><a href="live.html">Live</a></li>
+  </ul>
+  <div class="nav-search">
+    <input id="navSearch" type="text" placeholder="Search player..."/>
+    <button onclick="navSearch()">GO</button>
+  </div>
+</nav>
+<div class="page-hero z1">
+  <div class="page-tag">// Meta Report</div>
+  <div class="page-title">AGENTS &amp; WEAPONS</div>
+  <div class="seg-tabs">
+    <div class="seg-tab active" onclick="showSection('agents',this)">Agents</div>
+    <div class="seg-tab" onclick="showSection('weapons',this)">Weapons</div>
+  </div>
+</div>
+<div class="filters-bar z1" id="agentFilters">
+  <span class="fl">Rank:</span>
+  <select class="fsel" id="rankFilter" onchange="renderAgents()">
+    <option value="all">All Ranks</option><option value="radiant">Radiant</option><option value="immortal">Immortal+</option><option value="diamond">Diamond</option>
+  </select>
+  <span class="fl">Sort by:</span>
+  <select class="fsel" id="sortFilter" onchange="renderAgents()">
+    <option value="wr">Win Rate</option><option value="pr">Pick Rate</option><option value="kda">KDA</option><option value="acs">ACS</option>
+  </select>
+</div>
+<div class="filters-bar z1" id="weaponFilters" style="display:none">
+  <span class="fl">Type:</span>
+  <select class="fsel" id="weaponTypeFilter" onchange="renderWeapons()">
+    <option value="all">All</option><option value="Assault Rifle">Assault Rifle</option><option value="Sniper Rifle">Sniper Rifle</option><option value="SMG">SMG</option><option value="Shotgun">Shotgun</option><option value="LMG">LMG</option><option value="Pistol">Pistol</option><option value="Melee">Melee</option>
+  </select>
+  <span class="fl">Sort by:</span>
+  <select class="fsel" id="weaponSortFilter" onchange="renderWeapons()">
+    <option value="wr">Win Rate</option><option value="pr">Pick Rate</option><option value="dpr">DPR</option><option value="price">Price</option>
+  </select>
+</div>
+<div class="content z1" id="mainContent"></div>
+<footer class="z1"><p style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">Not affiliated with Riot Games &mdash; &copy; 2026 VTRACKER</p></footer>
+<script>
+  const agentData=[
+    {name:'Jett',    role:'Duelist',    ico:'🌀',wr:52.1,pr:18.4,kda:1.18,acs:218,hs:28.1},
+    {name:'Raze',    role:'Duelist',    ico:'⚡',wr:53.0,pr:15.2,kda:1.22,acs:224,hs:24.3},
+    {name:'Reyna',   role:'Duelist',    ico:'💀',wr:51.3,pr:22.1,kda:1.14,acs:204,hs:19.8},
+    {name:'Phoenix', role:'Duelist',    ico:'🔥',wr:48.6,pr:4.8, kda:1.04,acs:192,hs:22.0},
+    {name:'Neon',    role:'Duelist',    ico:'💡',wr:49.8,pr:6.2, kda:1.08,acs:198,hs:20.1},
+    {name:'Iso',     role:'Duelist',    ico:'🔷',wr:50.4,pr:8.1, kda:1.10,acs:200,hs:21.4},
+    {name:'Yoru',    role:'Duelist',    ico:'👻',wr:49.2,pr:3.9, kda:1.06,acs:194,hs:23.2},
+    {name:'Sage',    role:'Sentinel',   ico:'🌿',wr:49.8,pr:16.3,kda:0.94,acs:178,hs:18.1},
+    {name:'Cypher',  role:'Sentinel',   ico:'🎯',wr:50.4,pr:9.7, kda:1.02,acs:184,hs:21.4},
+    {name:'Killjoy', role:'Sentinel',   ico:'🤖',wr:51.6,pr:14.2,kda:1.06,acs:188,hs:20.8},
+    {name:'Chamber', role:'Sentinel',   ico:'🎩',wr:50.1,pr:7.4, kda:1.09,acs:196,hs:24.6},
+    {name:'Deadlock',role:'Sentinel',   ico:'🔒',wr:48.9,pr:5.1, kda:0.98,acs:180,hs:19.3},
+    {name:'Vyse',    role:'Sentinel',   ico:'🕷️',wr:49.4,pr:4.2, kda:0.96,acs:176,hs:18.7},
+    {name:'Viper',   role:'Controller', ico:'🧊',wr:50.9,pr:11.2,kda:1.08,acs:198,hs:20.6},
+    {name:'Omen',    role:'Controller', ico:'🌑',wr:49.2,pr:13.8,kda:1.06,acs:188,hs:19.1},
+    {name:'Astra',   role:'Controller', ico:'⭐',wr:50.3,pr:5.8, kda:1.02,acs:183,hs:18.9},
+    {name:'Brimstone',role:'Controller',ico:'🎯',wr:51.1,pr:8.4, kda:1.04,acs:186,hs:19.4},
+    {name:'Harbor',  role:'Controller', ico:'🌊',wr:48.7,pr:3.2, kda:0.98,acs:178,hs:18.2},
+    {name:'Clove',   role:'Controller', ico:'🌸',wr:51.8,pr:9.6, kda:1.12,acs:202,hs:21.8},
+    {name:'Sova',    role:'Initiator',  ico:'🏹',wr:50.6,pr:10.3,kda:1.05,acs:186,hs:19.8},
+    {name:'Breach',  role:'Initiator',  ico:'👊',wr:50.1,pr:6.8, kda:1.03,acs:184,hs:19.6},
+    {name:'Skye',    role:'Initiator',  ico:'🦅',wr:51.2,pr:8.9, kda:1.07,acs:190,hs:20.4},
+    {name:'KAYO',    role:'Initiator',  ico:'⚔️',wr:50.8,pr:7.6, kda:1.08,acs:192,hs:20.9},
+    {name:'Fade',    role:'Initiator',  ico:'🌙',wr:50.4,pr:7.1, kda:1.05,acs:187,hs:19.7},
+    {name:'Gekko',   role:'Initiator',  ico:'🦎',wr:51.4,pr:9.2, kda:1.06,acs:189,hs:20.2},
+    {name:'Tejo',    role:'Initiator',  ico:'🪖',wr:50.6,pr:5.4, kda:1.04,acs:185,hs:19.5},
+  ];
+
+  const weaponData=[
+    {name:'Vandal',  type:'Assault Rifle',price:2900,ico:'🔫',col:'#ff4444',wr:54.2,pr:42.1,dpr:156,hs:29,hd:160,bd:40,ld:34,note:'One-tap at any range. No damage falloff.'},
+    {name:'Phantom', type:'Assault Rifle',price:2900,ico:'🔫',col:'#4488ff',wr:52.8,pr:38.6,dpr:152,hs:31,hd:156,bd:39,ld:33,note:'Silenced. Damage drops at 15m+. Better spray.'},
+    {name:'Bulldog', type:'Assault Rifle',price:2050,ico:'🔫',col:'#ffaa44',wr:49.8,pr:6.2, dpr:128,hs:24,hd:116,bd:35,ld:30,note:'Burst fire on right-click. Budget rifle option.'},
+    {name:'Guardian',type:'Assault Rifle',price:2250,ico:'🔫',col:'#44ffaa',wr:51.2,pr:4.8, dpr:140,hs:32,hd:195,bd:65,ld:49,note:'Semi-auto precision rifle. One-tap head at any range.'},
+    {name:'Operator',type:'Sniper Rifle', price:4700,ico:'🎯',col:'#ffcc00',wr:56.1,pr:8.2, dpr:247,hs:44,hd:255,bd:150,ld:127,note:'One-shot body kill. Highest DPR in the game.'},
+    {name:'Marshal', type:'Sniper Rifle', price:950, ico:'🎯',col:'#aaaaff',wr:51.3,pr:5.1, dpr:148,hs:38,hd:202,bd:101,ld:85, note:'Budget sniper. One-shot head, two-shot body.'},
+    {name:'Outlaw',  type:'Sniper Rifle', price:2400,ico:'🎯',col:'#ff88aa',wr:52.1,pr:3.8, dpr:188,hs:40,hd:238,bd:140,ld:119,note:'Double-barrel sniper. Two shots before reload.'},
+    {name:'Spectre', type:'SMG',          price:1600,ico:'💨',col:'#44ffcc',wr:50.4,pr:12.3,dpr:98, hs:22,hd:78, bd:26, ld:22, note:'Silenced. Best eco weapon. Accurate while moving.'},
+    {name:'Stinger', type:'SMG',          price:1100,ico:'💨',col:'#ff44ff',wr:48.1,pr:4.8, dpr:82, hs:19,hd:67, bd:27, ld:23, note:'High burst. Use first 4 bullets for accuracy.'},
+    {name:'Judge',   type:'Shotgun',      price:1850,ico:'🪣',col:'#ff8844',wr:50.8,pr:4.1, dpr:128,hs:26,hd:92, bd:36, ld:30, note:'Full-auto shotgun. Dominates close quarters.'},
+    {name:'Bucky',   type:'Shotgun',      price:900, ico:'🪣',col:'#ffff44',wr:49.2,pr:3.2, dpr:112,hs:24,hd:88, bd:34, ld:29, note:'Right-click for tight spread. Deadly up close.'},
+    {name:'Odin',    type:'LMG',          price:3200,ico:'🤖',col:'#ff4488',wr:51.4,pr:2.8, dpr:182,hs:18,hd:95, bd:38, ld:32, note:'Spin-up for accuracy. Great for holding angles.'},
+    {name:'Ares',    type:'LMG',          price:1600,ico:'🤖',col:'#8844ff',wr:49.6,pr:3.4, dpr:152,hs:16,hd:72, bd:30, ld:25, note:'Cheaper LMG. High wall penetration damage.'},
+    {name:'Sheriff', type:'Pistol',       price:800, ico:'🔫',col:'#ffcc44',wr:52.1,pr:18.4,dpr:87, hs:35,hd:159,bd:55, ld:46, note:'One-shot head at any range. High skill ceiling.'},
+    {name:'Ghost',   type:'Pistol',       price:500, ico:'🔫',col:'#88ddff',wr:50.6,pr:22.1,dpr:64, hs:28,hd:105,bd:30, ld:25, note:'Silenced. Best secondary. Accurate while moving.'},
+    {name:'Classic', type:'Pistol',       price:0,   ico:'🔫',col:'#aaaaaa',wr:49.8,pr:100, dpr:52, hs:22,hd:78, bd:26, ld:22, note:'Free weapon. Right-click burst at close range.'},
+    {name:'Frenzy',  type:'Pistol',       price:450, ico:'🔫',col:'#44ff88',wr:49.4,pr:8.2, dpr:58, hs:20,hd:78, bd:26, ld:22, note:'Full-auto pistol. Strong eco option.'},
+    {name:'Shorty',  type:'Pistol',       price:150, ico:'🔫',col:'#ff6644',wr:48.2,pr:6.1, dpr:44, hs:18,hd:36, bd:12, ld:10, note:'Cheapest gun. Devastating at point-blank range.'},
+    {name:'Knife',   type:'Melee',        price:0,   ico:'🔪',col:'#44ffff',wr:50.0,pr:100, dpr:0,  hs:0, hd:75, bd:50, ld:50, note:'Free. Right-click heavy slash. Move 25% faster.'},
+  ];
+
+  const roleTags={Duelist:'// Duelists',Initiator:'// Initiators',Controller:'// Controllers',Sentinel:'// Sentinels'};
+  const roleLabels={Duelist:'FRAGGERS',Initiator:'SUPPORT',Controller:'SMOKERS',Sentinel:'ANCHORS'};
+
+  function tierBadge(wr){
+    if(wr>=53) return {cls:'hot',label:'S-TIER'};
+    if(wr>=51) return {cls:'hot',label:'A-TIER'};
+    if(wr>=49) return {cls:'mid',label:'B-TIER'};
+    return {cls:'cold',label:'C-TIER'};
+  }
+
+  function renderAgents(){
+    const sort=document.getElementById('sortFilter').value;
+    let data=[...agentData].sort((a,b)=>b[sort]-a[sort]);
+    const roles=['Duelist','Initiator','Controller','Sentinel'];
+    const content=document.getElementById('mainContent');
+    content.innerHTML=roles.map(role=>{
+      const agents=data.filter(a=>a.role===role);
+      if(!agents.length) return '';
+      return `<div class="section-divider"><span class="sd-tag">${roleTags[role]}</span><span class="sd-title">${roleLabels[role]}</span><div class="sd-line"></div></div>
+      <div class="agents-grid">${agents.map(a=>{
+        const t=tierBadge(a.wr);
+        return `<div class="agent-card">
+          <div class="ac-head"><span class="ac-icon">${a.ico}</span><div><div class="ac-name">${a.name}</div><div class="ac-role">${a.role}</div></div></div>
+          <div class="ac-stats">
+            <div class="ac-stat"><div class="ac-stat-val">${a.wr}%</div><div class="ac-stat-lbl">Win Rate</div></div>
+            <div class="ac-stat"><div class="ac-stat-val">${a.pr}%</div><div class="ac-stat-lbl">Pick Rate</div></div>
+            <div class="ac-stat"><div class="ac-stat-val">${a.kda}</div><div class="ac-stat-lbl">KDA</div></div>
+            <div class="ac-stat"><div class="ac-stat-val">${a.acs}</div><div class="ac-stat-lbl">ACS</div></div>
+          </div>
+          <div class="ac-bar-row">
+            <div class="ac-bar-item"><span class="ac-bar-lbl">Win Rate</span><div class="ac-bar-track"><div class="ac-bar-fill" style="width:${Math.min(a.wr,100)}%"></div></div><span class="ac-bar-val">${a.wr}%</span></div>
+            <div class="ac-bar-item"><span class="ac-bar-lbl">Pick Rate</span><div class="ac-bar-track"><div class="ac-bar-fill" style="width:${Math.min(a.pr*3,100)}%"></div></div><span class="ac-bar-val">${a.pr}%</span></div>
+            <div class="ac-bar-item"><span class="ac-bar-lbl">HS Rate</span><div class="ac-bar-track"><div class="ac-bar-fill" style="width:${Math.min(a.hs*2,100)}%"></div></div><span class="ac-bar-val">${a.hs}%</span></div>
+          </div>
+          <span class="ac-wr-badge ${t.cls}">${t.label}</span>
+        </div>`;
+      }).join('')}</div>`;
+    }).join('');
+  }
+
+  function renderWeapons(){
+    const type=document.getElementById('weaponTypeFilter').value;
+    const sort=document.getElementById('weaponSortFilter').value;
+    let data=[...weaponData];
+    if(type!=='all') data=data.filter(w=>w.type===type);
+    if(sort==='wr') data.sort((a,b)=>b.wr-a.wr);
+    else if(sort==='pr') data.sort((a,b)=>b.pr-a.pr);
+    else if(sort==='dpr') data.sort((a,b)=>b.dpr-a.dpr);
+    else if(sort==='price') data.sort((a,b)=>b.price-a.price);
+    const types=['Assault Rifle','Sniper Rifle','SMG','Shotgun','LMG','Pistol','Melee'];
+    const content=document.getElementById('mainContent');
+    if(type!=='all'){
+      content.innerHTML=`<div class="weapons-grid">${data.map(weaponCard).join('')}</div>`;
+    } else {
+      content.innerHTML=types.map(t=>{
+        const ws=data.filter(w=>w.type===t);
+        if(!ws.length) return '';
+        return `<div class="section-divider"><span class="sd-tag">// ${t}</span><div class="sd-line"></div></div><div class="weapons-grid">${ws.map(weaponCard).join('')}</div>`;
+      }).join('');
+    }
+  }
+
+  function weaponCard(w){
+    return `<div class="weapon-card">
+      <div class="wc-head"><div><div class="wc-name">${w.name}</div><div class="wc-type">${w.type}</div></div><div class="wc-price">${w.price?w.price.toLocaleString()+' Creds':'Free'}</div></div>
+      <div class="wc-visual" style="color:${w.col}">${w.ico}</div>
+      <div class="wc-stats">
+        <div class="wc-stat"><div class="wc-stat-val">${w.wr}%</div><div class="wc-stat-lbl">Win Rate</div></div>
+        <div class="wc-stat"><div class="wc-stat-val">${w.pr===100?'Universal':w.pr+'%'}</div><div class="wc-stat-lbl">Pick Rate</div></div>
+        <div class="wc-stat"><div class="wc-stat-val">${w.dpr||'—'}</div><div class="wc-stat-lbl">Avg DPR</div></div>
+        <div class="wc-stat"><div class="wc-stat-val">${w.hs||'—'}${w.hs?'%':''}</div><div class="wc-stat-lbl">HS Rate</div></div>
+      </div>
+      <div class="wc-dmg-title">Damage per bullet</div>
+      <div class="wc-dmg-row"><span class="wc-dmg-zone">Head</span><span class="wc-dmg-val head">${w.hd}</span></div>
+      <div class="wc-dmg-row"><span class="wc-dmg-zone">Body</span><span class="wc-dmg-val">${w.bd}</span></div>
+      <div class="wc-dmg-row"><span class="wc-dmg-zone">Legs</span><span class="wc-dmg-val">${w.ld}</span></div>
+      <div class="wc-note">${w.note}</div>
+    </div>`;
+  }
+
+  function showSection(id,btn){
+    document.querySelectorAll('.seg-tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('agentFilters').style.display=id==='agents'?'flex':'none';
+    document.getElementById('weaponFilters').style.display=id==='weapons'?'flex':'none';
+    if(id==='agents') renderAgents();
+    else renderWeapons();
+  }
+
+  function navSearch(){const v=document.getElementById('navSearch').value.trim();if(v)location.href=`profile.html?player=${encodeURIComponent(v)}`;}
+  document.getElementById('navSearch').addEventListener('keydown',e=>{if(e.key==='Enter')navSearch();});
+  renderAgents();
+</script>
+</body>
+</html>
